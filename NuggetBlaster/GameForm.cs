@@ -1,72 +1,92 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using NuggetBlaster.GameCore;
 
 namespace NuggetBlaster
 {
     public partial class GameForm : Form
     {
-        int left = 0;
-        int right = 0;
-        int up = 0;
-        int down = 0;
+        private readonly Engine GameEngine;
 
         public GameForm()
         {
             InitializeComponent();
+
+            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+
+            GameEngine = new Engine(this);           
+        }
+
+        public void StartGameTimer()
+        {
+            gameTimer.Interval = 1000 / Engine.Fps;
             gameTimer.Start();
         }
 
-        private void gameKeyDown(object sender, KeyEventArgs e)
+        public void StopGameTimer()
         {
-            if (e.KeyCode == Keys.Up)
-            {
-                this.up = 10;
-            } 
-            if (e.KeyCode == Keys.Down)
-            {
-                this.down = 10;
-            }
-            if (e.KeyCode == Keys.Left)
-            {
-                this.left = 10;
-            }
-            if (e.KeyCode == Keys.Right)
-            {
-                this.right = 10;
-            }
+            gameTimer.Stop();
         }
 
-        private void gameKeyUp(object sender, KeyEventArgs e)
+        private void GameKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Up)
-            {
-                this.up = 0;
-            }
-            if (e.KeyCode == Keys.Down)
-            {
-                this.down = 0;
-            }
-            if (e.KeyCode == Keys.Left)
-            {
-                this.left = 0;
-            }
-            if (e.KeyCode == Keys.Right)
-            {
-                this.right = 0;
-            }
+            GameEngine.GameKeyAction(e.KeyCode.ToString(), true);
         }
 
-        private void gameTimer_Tick(object sender, EventArgs e)
+        private void GameKeyUp(object sender, KeyEventArgs e)
         {
-            nuggetHero.Top -= up - down;
-            nuggetHero.Left -= left - right;
+            GameEngine.GameKeyAction(e.KeyCode.ToString(), false);
+        }
+
+        private void GameTimer_Tick(object sender, EventArgs e)
+        {
+            GameEngine.ProcessGameTick();
+
+            if (background.Left < 0 - Width)
+                background.Left = 0;
+            background.Left -= Engine.GetPPF(200);
+        }
+
+        public PictureBox CreatePicturebox(String name, Point location, Size size, Color color)
+        {
+            PictureBox pictureBox = new()
+            {
+                Location  = location,
+                Name      = name,
+                Size      = size,
+                BackColor = color
+            };
+            Controls.Add(pictureBox);
+            pictureBox.BringToFront();
+
+            return pictureBox;
+        }
+
+        public PictureBox CreatePicturebox(string name, Point location, Size size, Image image)
+        {
+            PictureBox pictureBox = new()
+            {
+                Location = location,
+                Name = name,
+                Image = image,
+                Size = size,
+                BackColor = Color.FromArgb(22, 2, 104)
+            };
+            Controls.Add(pictureBox);
+            pictureBox.BringToFront();
+
+            return pictureBox;
+        }
+
+        public void DeletePicturebox(PictureBox pictureBox)
+        {
+            Controls.Remove(pictureBox);
+        }
+
+        public static void SetPictureBoxLocation(PictureBox pictureBox, Point location)
+        {
+            pictureBox.Location = location;
         }
     }
 }
