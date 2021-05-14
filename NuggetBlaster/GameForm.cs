@@ -13,8 +13,6 @@ namespace NuggetBlaster
         {
             InitializeComponent();
 
-            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-
             GameEngine = new Engine(this);           
         }
 
@@ -22,11 +20,17 @@ namespace NuggetBlaster
         {
             gameTimer.Interval = 1000 / Engine.Fps;
             gameTimer.Start();
+            NuggetBlasterText.Hide();
+            InsertCoinText.Hide();
+            PressEnterText.Hide();
         }
 
         public void StopGameTimer()
         {
             gameTimer.Stop();
+            NuggetBlasterText.Show();
+            InsertCoinText.Show();
+            PressEnterText.Show();
         }
 
         private void GameKeyDown(object sender, KeyEventArgs e)
@@ -48,7 +52,7 @@ namespace NuggetBlaster
             background.Left -= Engine.GetPPF(200);
         }
 
-        public PictureBox CreatePicturebox(String name, Point location, Size size, Color color)
+        public PictureBox CreatePicturebox(string name, Point location, Size size, Color color)
         {
             PictureBox pictureBox = new()
             {
@@ -71,7 +75,8 @@ namespace NuggetBlaster
                 Name = name,
                 Image = image,
                 Size = size,
-                BackColor = Color.FromArgb(22, 2, 104)
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.FromArgb(22, 2, 104)               
             };
             Controls.Add(pictureBox);
             pictureBox.BringToFront();
@@ -87,6 +92,16 @@ namespace NuggetBlaster
         public static void SetPictureBoxLocation(PictureBox pictureBox, Point location)
         {
             pictureBox.Location = location;
+        }
+
+        public bool PictureBoxInBounds(PictureBox picturebox)
+        {
+            return ClientRectangle.IntersectsWith(picturebox.Bounds);
+        }
+
+        public bool PictureBoxOverlaps(PictureBox pictureboxOne, PictureBox pictureboxTwo)
+        {
+            return pictureboxOne.Bounds.IntersectsWith(pictureboxTwo.Bounds);
         }
     }
 }

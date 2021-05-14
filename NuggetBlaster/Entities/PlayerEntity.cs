@@ -8,8 +8,7 @@ namespace NuggetBlaster.Entities
 {
     public class PlayerEntity : Entity
     {
-        public override int baseSpeed { get; set; } = 400;
-
+        public override int BaseSpeed { get; set; } = 400;
         public override int  Team     { get; set; } = 1;
         public override bool CanShoot { get; set; } = true;
         public override bool Spacebar { get; set; } = false;
@@ -17,7 +16,7 @@ namespace NuggetBlaster.Entities
         public override int ShootCooldownMS { get; set; } = 200;
 
         public PlayerEntity() {
-            MaxSpeed = baseSpeed;
+            MaxSpeed = BaseSpeed;
         }
 
         public override ProjectileEntity Shoot()
@@ -26,12 +25,9 @@ namespace NuggetBlaster.Entities
             return new ProjectileEntity
             {
                 MoveRight = true,
-                MaxSpeed = ProjectileEntity.baseSpeed * 2,
+                MaxSpeed = BaseSpeed * 2,
                 Team = Team
             };
         }
-
-
-
     }
 }
