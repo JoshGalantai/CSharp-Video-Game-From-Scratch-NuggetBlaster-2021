@@ -3,32 +3,33 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Media;
-using System.Windows.Forms;
+using NuggetBlaster.Properties;
 
 namespace NuggetBlaster.GameCore
 {
     class Engine
     {
-        public const int Fps = 30;
+        public const int Fps = 60;
 
-        private readonly System.Media.SoundPlayer Title    = new(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\title.wav");
-        private readonly System.Media.SoundPlayer StageOne = new(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\stage1.wav");
+        private readonly System.Media.SoundPlayer Title    = new(Resources.title);
+        private readonly System.Media.SoundPlayer StageOne = new(Resources.stage1);
 
-        private readonly IDictionary<string, PictureBox> EntityUIList       = new Dictionary<string, PictureBox>();
-        private readonly IDictionary<string, Entity>     EntityDataList     = new Dictionary<string, Entity>();
-        private readonly IDictionary<string, PictureBox> TempEntityUIList   = new Dictionary<string, PictureBox>();
-        private readonly IDictionary<string, Entity>     TempEntityDataList = new Dictionary<string, Entity>();
+        public  readonly IDictionary<string, Entity> EntityDataList = new Dictionary<string, Entity>();
+        private readonly IDictionary<string, Entity> TempEntityList = new Dictionary<string, Entity>();
 
         private readonly Random Random = new();
 
-        private int EntityCounter = 0;
-        private int EnemyCounter  = 0;
-        
+        private int EntityIterator = 0;
+        private int EnemyCount     = 0;
+        private int MaxEnemies     = 4;
 
-        private readonly GameForm Form;
+        private readonly GameForm GameUI;
 
-        public Engine(GameForm GameForm) {
-            Form = GameForm;
+        public int  Score     = 0;
+        public bool isRunning = false;
+
+        public Engine(GameForm gameUI) {
+            GameUI = gameUI;
             Title.Play();
         }
 
@@ -39,58 +40,57 @@ namespace NuggetBlaster.GameCore
 
         public void StartGame()
         {
+            Score = 0;
             ClearEntities();
-            Form.StartGameTimer();
             StageOne.Play();
+            isRunning = true;
 
-            if ( ! EntityUIList.ContainsKey("player"))
-            {
-                PictureBox pictureBox = Form.CreatePicturebox("player", new Point(15, 200), new Size(100, 50), Image.FromFile(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\Nugget.png"));
-
-                EntityUIList["player"]   = pictureBox;
-                EntityDataList["player"] = new PlayerEntity();
-            }
+            if ( !EntityDataList.ContainsKey("player"))
+                EntityDataList["player"] = new PlayerEntity(new Rectangle(15, 200, 100, 50), Resources.Nugget);
         }
 
         public void GameOver()
         {
             Title.Play();
             ClearEntities();
-            Form.StopGameTimer();
+            isRunning = false;
         }
 
         public void ProcessGameTick()
         {
             bool playShoot = false;
-            bool playBoom  = false;
+            bool playBoom = false;
+            if (!EntityDataList.ContainsKey("player"))
+            {
+                GameOver();
+                return;
+            }
+
             if (EntityDataList["player"].Spacebar && EntityDataList["player"].CheckCanShoot())
             {
-                ProjectileEntity projectile = EntityDataList["player"].Shoot();
-                Point location = new(EntityUIList["player"].Right, EntityUIList["player"].Top + (EntityUIList["player"].Height / 2));
-                System.Drawing.Color color = projectile.Team == 1 ? System.Drawing.Color.FromArgb(0, 255, 0) : System.Drawing.Color.FromArgb(255, 0, 0);
-                PictureBox pictureBox = Form.CreatePicturebox(EntityCounter.ToString(), location, new Size(15, 5), color);
-                AddEntity(pictureBox, projectile, "proj-");
+                Point location = new(EntityDataList["player"].SpriteRectangle.Right, EntityDataList["player"].SpriteRectangle.Top + (EntityDataList["player"].SpriteRectangle.Height / 2));
+                ProjectileEntity projectile = EntityDataList["player"].Shoot(new Rectangle(location, new Size(30, 16)), EntityDataList["player"].Team == 1 ? Resources.AllyProjectile : Resources.EnemyProjectile);
+                AddEntity(projectile, "proj-");
                 playShoot = true;
             }
 
-            List<string> deleteList         = new();
-
-
-            foreach (KeyValuePair<string, PictureBox> UIEntity in EntityUIList)
+            List<string> deleteList = new();
+            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
             {
-                if (EntityDataList[UIEntity.Key].GetType() == typeof(EnemyEntity) && EntityDataList[UIEntity.Key].CheckCanShoot())
+                entity.Value.CalculateMovement(GameUI.GetGameCanvasAsRectangle());
+                if (!RectangleOverlaps(entity.Value.SpriteRectangle, GameUI.GetGameCanvasAsRectangle()))
                 {
-                    ProjectileEntity projectile = EntityDataList[UIEntity.Key].Shoot();
-                    Point location = new(EntityUIList[UIEntity.Key].Left, EntityUIList[UIEntity.Key].Top + (EntityUIList[UIEntity.Key].Height / 2));
-                    System.Drawing.Color color = projectile.Team == 1 ? System.Drawing.Color.FromArgb(0, 255, 0) : System.Drawing.Color.FromArgb(255, 0, 0);
-                    PictureBox pictureBox = Form.CreatePicturebox(EntityCounter.ToString(), location, new Size(15, 5), color);
-                    EntityCounter++;
-                    AddToTempEntityList(pictureBox, projectile, "proj-");
+                    deleteList.Add(entity.Key);
+                    continue;
+                }
+                if (EntityDataList[entity.Key].GetType() == typeof(EnemyEntity) && entity.Value.CheckCanShoot())
+                {
+                    Point location = new(entity.Value.SpriteRectangle.Left - 20, entity.Value.SpriteRectangle.Top + (entity.Value.SpriteRectangle.Height / 2));
+                    ProjectileEntity projectile = entity.Value.Shoot(new Rectangle(location, new Size(30, 16)), entity.Value.Team == 1 ? Resources.AllyProjectile : Resources.EnemyProjectile);
+                    EntityIterator++;
+                    AddToTempEntityList(projectile, "proj-");
                     playShoot = true;
                 }
-                GameForm.SetPictureBoxLocation(UIEntity.Value, EntityDataList[UIEntity.Key].CalculateMovement(UIEntity.Value.Location));
-                if ( ! Form.PictureBoxInBounds(UIEntity.Value))
-                    deleteList.Add(UIEntity.Key);
             }
             foreach (string id in deleteList)
                 DeleteEntity(id);
@@ -109,31 +109,37 @@ namespace NuggetBlaster.GameCore
                         continue;
                     if (comparisonEntity.Value.GetType() == typeof(ProjectileEntity) && comparisonEntity.Value.Team != nonProjEntity.Value.Team)
                     {
-                        if (Form.PictureBoxOverlaps(EntityUIList[nonProjEntity.Key], EntityUIList[comparisonEntity.Key]))
+                        if (RectangleOverlaps(EntityDataList[nonProjEntity.Key].SpriteRectangle, EntityDataList[comparisonEntity.Key].SpriteRectangle))
                         {
                             deleteList.Add(comparisonEntity.Key);
                             nonProjEntity.Value.HitPoints--;
                             if (nonProjEntity.Value.HitPoints < 1)
                             {
                                 deleteList.Add(nonProjEntity.Key);
+                                Score += nonProjEntity.Value.PointsOnKill;
                                 playBoom = true;
                             }
                         }
                     }
                     else if (comparisonEntity.Value.GetType() != typeof(ProjectileEntity) && comparisonEntity.Value.Team != nonProjEntity.Value.Team)
                     {
-                        if (Form.PictureBoxOverlaps(EntityUIList[nonProjEntity.Key], EntityUIList[comparisonEntity.Key]))
+                        if (RectangleOverlaps(EntityDataList[nonProjEntity.Key].SpriteRectangle, EntityDataList[comparisonEntity.Key].SpriteRectangle))
                         {
                             nonProjEntity.Value.HitPoints--;
                             if (nonProjEntity.Value.HitPoints < 1)
+                            {
                                 deleteList.Add(nonProjEntity.Key);
+                                Score += comparisonEntity.Value.PointsOnKill;
+                                playBoom = true;
+                            }
 
                             comparisonEntity.Value.HitPoints--;
                             if (comparisonEntity.Value.HitPoints < 1)
+                            {
                                 deleteList.Add(comparisonEntity.Key);
-
-                            if (nonProjEntity.Value.HitPoints < 1 || comparisonEntity.Value.HitPoints < 1)
+                                Score += comparisonEntity.Value.PointsOnKill;
                                 playBoom = true;
+                            }
                         }
                     }
                 }
@@ -142,12 +148,11 @@ namespace NuggetBlaster.GameCore
             foreach (string id in deleteList)
                 DeleteEntity(id);
 
-            if (EnemyCounter < 4)
+            if (EnemyCount < MaxEnemies)
             {
-                EnemyEntity enemy = new();
+                EnemyEntity enemy = new(new Rectangle(950, Random.Next(50, 450), 100, 100), Resources.PlainPickle);
                 enemy.MaxSpeed = Random.Next(400, 700);
-                PictureBox pictureBox = Form.CreatePicturebox(EntityCounter.ToString(), new Point(950, Random.Next(50, 450)), new Size(50, 50), Image.FromFile(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\Pickle.png"));
-                AddEntity(pictureBox, enemy, "enemy-");
+                AddEntity(enemy, "enemy-");
             }
 
             if (playShoot)
@@ -155,7 +160,7 @@ namespace NuggetBlaster.GameCore
             if (playBoom)
                 PlaySoundAsync(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\Boom.wav");
 
-            if (!EntityUIList.ContainsKey("player"))
+            if (!EntityDataList.ContainsKey("player"))
                 GameOver();
         }
 
@@ -182,50 +187,43 @@ namespace NuggetBlaster.GameCore
 
         public void ClearEntities()
         {
-            foreach (KeyValuePair<string, PictureBox> UIEntity in EntityUIList)
-                DeleteEntity(UIEntity.Key);
+            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
+                DeleteEntity(entity.Key);
 
             EntityDataList.Clear();
-            EntityUIList.Clear();
-            EnemyCounter  = 0;
-            EntityCounter = 0;
+            EnemyCount     = 0;
+            EntityIterator = 0;
         }
 
-        public void AddEntity(PictureBox UI, Entity Data, string prefix = "")
+        public void AddEntity(Entity Data, string prefix = "")
         {
-            EntityUIList[prefix + EntityCounter.ToString()] = UI;
-            EntityDataList[prefix + EntityCounter.ToString()] = Data;
-            EntityCounter++;
+            EntityDataList[prefix + EntityIterator.ToString()] = Data;
+            EntityIterator++;
             if (Data.GetType() == typeof(EnemyEntity))
-                EnemyCounter++;
+                EnemyCount++;
         }
 
-        public void AddToTempEntityList(PictureBox UI, Entity Data, string prefix = "")
+        public void AddToTempEntityList(Entity entity, string prefix = "")
         {
-            TempEntityUIList[prefix + EntityCounter.ToString()] = UI;
-            TempEntityDataList[prefix + EntityCounter.ToString()] = Data;
-            EntityCounter++;
-            if (Data.GetType() == typeof(EnemyEntity))
-                EnemyCounter++;
+            TempEntityList[prefix + EntityIterator.ToString()] = entity;
+            EntityIterator++;
+            if (entity.GetType() == typeof(EnemyEntity))
+                EnemyCount++;
         }
 
         public void AddAllTempEntities()
         {
-            foreach (KeyValuePair<string, PictureBox> UIEntity in TempEntityUIList)
+            foreach (KeyValuePair<string, Entity> entity in TempEntityList)
             {
-                EntityUIList[UIEntity.Key]   = UIEntity.Value;
-                EntityDataList[UIEntity.Key] = TempEntityDataList[UIEntity.Key];
+                EntityDataList[entity.Key] = entity.Value;
             }
-            TempEntityDataList.Clear();
-            TempEntityUIList.Clear();
+            TempEntityList.Clear();
         }
 
         public void DeleteEntity(string id)
         {
             if (EntityDataList.ContainsKey(id) && EntityDataList[id].GetType() == typeof(EnemyEntity))
-                EnemyCounter--;
-            Form.DeletePicturebox(EntityUIList[id]);
-            EntityUIList.Remove(id);
+                EnemyCount--;
             EntityDataList.Remove(id);
         }
 
@@ -234,6 +232,31 @@ namespace NuggetBlaster.GameCore
             MediaPlayer mediaPlayer = new();
             mediaPlayer.Open(new Uri(path));
             mediaPlayer.Play();
+        }
+
+        public IDictionary<string, Rectangle> GetEntityRectangleList()
+        {
+            IDictionary<string, Rectangle> rectangleList = new Dictionary<string, Rectangle>();
+            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
+            {
+                rectangleList[entity.Key] = entity.Value.SpriteRectangle;
+            }
+            return rectangleList;
+        }
+
+        public IDictionary<string, Image> GetEntitySpriteList()
+        {
+            IDictionary<string, Image> rectangleList = new Dictionary<string, Image>();
+            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
+            {
+                rectangleList[entity.Key] = entity.Value.Sprite;
+            }
+            return rectangleList;
+        }
+
+        public static bool RectangleOverlaps(Rectangle rectangleOne, Rectangle rectangleTwo)
+        {
+            return rectangleOne.IntersectsWith(rectangleTwo);
         }
     }
 }

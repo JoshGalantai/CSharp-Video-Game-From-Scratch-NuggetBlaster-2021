@@ -1,19 +1,15 @@
 ﻿using System;
+using System.Drawing;
 
 namespace NuggetBlaster.Entities
 {
     public class ProjectileEntity : Entity
     {
-        public override int BaseSpeed { get; set; } = 400;
+        public ProjectileEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite) { }
 
-        public override ProjectileEntity Shoot()
+        public override ProjectileEntity Shoot(Rectangle spriteRectangle, Image sprite)
         {
             throw new NotImplementedException();
-        }
-
-        public override dynamic CheckCollision()
-        {
-            return this;
         }
     }
 }
