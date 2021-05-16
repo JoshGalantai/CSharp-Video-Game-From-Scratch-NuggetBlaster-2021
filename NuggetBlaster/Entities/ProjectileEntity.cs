@@ -7,7 +7,7 @@ namespace NuggetBlaster.Entities
     {
         public ProjectileEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite) { }
 
-        public override ProjectileEntity Shoot(Rectangle spriteRectangle, Image sprite)
+        public override ProjectileEntity Shoot()
         {
             throw new NotImplementedException();
         }

@@ -1,28 +1,29 @@
 ﻿using NuggetBlaster.Properties;
+using System;
 using System.Drawing;
 
 namespace NuggetBlaster.Entities
 {
     class EnemyEntity : Entity
     {
-        public override int BaseSpeed { get; set; } = 600;
-        public override bool MoveLeft { get; set; } = true;
-        public override int Team { get; set; } = 2;
-        public override bool CanShoot { get; set; } = true;
-        public override long ShootCooldownTimer { get; set; } = 0;
-        public override int ShootCooldownMS { get; set; } = 1500;
-        public override int PointsOnKill { get; set; } = 100;
+        public EnemyEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite)
+        {
+            MoveLeft           = true;
+            Team               = 2;
+            PointsOnKill       = 100;
+            ShootCooldownMS    = 1500;
+            ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS/5;
+        }
 
-        public EnemyEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite) { }
-
-        public override ProjectileEntity Shoot(Rectangle spriteRectangle, Image sprite)
+        public override ProjectileEntity Shoot()
         {
             ShootCooldown();
-            return new ProjectileEntity(spriteRectangle, sprite)
+            Point location = new(SpriteRectangle.Left - 20, SpriteRectangle.Top + (SpriteRectangle.Height / 2));
+            return new ProjectileEntity(new Rectangle(location, new Size(30, 16)), Resources.enemyProjectile)
             {
                 MoveLeft = true,
-                MaxSpeed = (int) (BaseSpeed * 1.5),
-                Team = Team
+                MaxSpeed = (int) (MaxSpeed * 1.2),
+                Team     = Team
             };
         }
     }

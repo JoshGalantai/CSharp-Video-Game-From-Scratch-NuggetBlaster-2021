@@ -18,8 +18,8 @@ namespace NuggetBlaster.Entities
         public virtual bool Damageable { get; set; } = true;
         public virtual int HitPoints { get; set; } = 1;
         public virtual long ShootCooldownTimer { get; set; } = 0;
-        public virtual int ShootCooldownMS { get; set; } = 2000;
-        public virtual Image Sprite { get; set; } = Resources.PlainPickle;
+        public virtual int ShootCooldownMS { get; set; } = 1500;
+        public virtual Image Sprite { get; set; } = Resources.pickle;
         public virtual Rectangle SpriteRectangle { get; set; } = new Rectangle(0, 0, 0, 0);
         public virtual int PointsOnKill { get; set; } = 0;
 
@@ -29,33 +29,31 @@ namespace NuggetBlaster.Entities
             SpriteRectangle = spriteRectangle;
             if (sprite != null)
                 Sprite = sprite;
-            
         }
 
-        public abstract ProjectileEntity Shoot(Rectangle spriteRectangle, Image sprite);
-
-
-        public virtual void CalculateCollision(Rectangle bounds, Rectangle proposedRectangle)
-        {
-            SpriteRectangle = proposedRectangle;
-        }
+        public abstract ProjectileEntity Shoot();
 
         public void ShootCooldown()
         {
             ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS;
         }
 
-        public bool CheckCanShoot()
+        public virtual bool CheckCanShoot()
         {
-            return (CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer);
+            return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer;
         }
 
         public void CalculateMovement(Rectangle bounds)
         {
             Point location = SpriteRectangle.Location;
             location.X += (MoveRight ? GameCore.Engine.GetPPF(GetSpeed()) : 0) - (MoveLeft ? GameCore.Engine.GetPPF(GetSpeed()) : 0);
-            location.Y += (MoveDown ? GameCore.Engine.GetPPF(GetSpeed()) : 0) - (MoveUp ? GameCore.Engine.GetPPF(GetSpeed()) : 0);
-            CalculateCollision(bounds, new Rectangle(location, SpriteRectangle.Size));
+            location.Y += (MoveDown  ? GameCore.Engine.GetPPF(GetSpeed()) : 0) - (MoveUp   ? GameCore.Engine.GetPPF(GetSpeed()) : 0);
+            ProcessMovement(bounds, new Rectangle(location, SpriteRectangle.Size));
+        }
+
+        public virtual void ProcessMovement(Rectangle bounds, Rectangle proposedRectangle)
+        {
+            SpriteRectangle = proposedRectangle;
         }
 
         public double GetSpeed()

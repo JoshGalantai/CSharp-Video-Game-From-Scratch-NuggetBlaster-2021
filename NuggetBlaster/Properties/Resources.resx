@@ -118,35 +118,32 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="AllyProjectile" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\AllyProjectile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="allyProjectile" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\allyProjectile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Background" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Background.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="background" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\background.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Boom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Boom.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="boom" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\boom.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="EnemyProjectile" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\EnemyProjectile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="enemyProjectile" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\enemyProjectile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="KeysWhite" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\KeysWhite.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="keysWhite" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\keysWhite.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Nugget" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Nugget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="nugget" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\nugget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Pickle" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Pickle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="PlainPickle" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\PlainPickle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="pickle" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\pickle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="shoot" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shoot.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="stage1" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\stage1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="stageOne" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stageOne.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="title" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\title.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

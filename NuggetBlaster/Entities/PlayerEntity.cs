@@ -1,23 +1,28 @@
 ﻿using NuggetBlaster.Properties;
+using System;
 using System.Drawing;
 
 namespace NuggetBlaster.Entities
 {
     public class PlayerEntity : Entity
     {
-        public PlayerEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite) {
+        public PlayerEntity() : base(new Rectangle(15, 200, 100, 50), Resources.nugget) {
             BaseSpeed       = 400;
             Team            = 1;
             CanShoot        = true;
             ShootCooldownMS = 200;
-            Sprite          = Resources.Nugget;
-            
         }
 
-        public override ProjectileEntity Shoot(Rectangle spriteRectangle, Image sprite)
+        public override bool CheckCanShoot()
+        {
+            return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer && Spacebar;
+        }
+
+        public override ProjectileEntity Shoot()
         {
             ShootCooldown();
-            return new ProjectileEntity(spriteRectangle, sprite)
+            Point location = new(SpriteRectangle.Right + 20, SpriteRectangle.Top + (SpriteRectangle.Height / 2));
+            return new ProjectileEntity(new Rectangle(location, new Size(30, 16)), Resources.allyProjectile)
             {
                 MoveRight = true,
                 MaxSpeed  = BaseSpeed * 2,
@@ -26,7 +31,7 @@ namespace NuggetBlaster.Entities
         }
 
         // Make sure player does not go out of bounds
-        public override void CalculateCollision(Rectangle bounds, Rectangle proposedRectangle)
+        public override void ProcessMovement(Rectangle bounds, Rectangle proposedRectangle)
         {
             int x = proposedRectangle.X < bounds.X ? bounds.X : proposedRectangle.X;
             int y = proposedRectangle.Y < bounds.Y ? bounds.Y : proposedRectangle.Y;

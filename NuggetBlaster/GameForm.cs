@@ -11,9 +11,9 @@ namespace NuggetBlaster
     {
         private readonly Engine GameEngine;
 
-        private readonly Image     Background      = Resources.Background;
+        private readonly Image     Background      = Resources.background;
         private          Rectangle BackgroundRect;
-        private readonly Image     Keys            = Resources.KeysWhite;
+        private readonly Image     Keys            = Resources.keysWhite;
         private          Rectangle KeysRect        = new(0, 0, 225, 75);
 
         private readonly int CanvasEdgePadding = 10;
@@ -76,9 +76,7 @@ namespace NuggetBlaster
             {
                 IDictionary<string, Image> sprites = GameEngine.GetEntitySpriteList();
                 foreach (KeyValuePair<string, Rectangle> rectangle in GameEngine.GetEntityRectangleList())
-                {
                     e.Graphics.DrawImage(sprites[rectangle.Key], rectangle.Value);
-                }
             }
             else
             {

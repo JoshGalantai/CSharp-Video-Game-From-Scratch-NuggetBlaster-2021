@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Media;
 using NuggetBlaster.Properties;
+using System.Linq;
+using System.IO;
 
 namespace NuggetBlaster.GameCore
 {
@@ -11,11 +13,7 @@ namespace NuggetBlaster.GameCore
     {
         public const int Fps = 60;
 
-        private readonly System.Media.SoundPlayer Title    = new(Resources.title);
-        private readonly System.Media.SoundPlayer StageOne = new(Resources.stage1);
-
-        public  readonly IDictionary<string, Entity> EntityDataList = new Dictionary<string, Entity>();
-        private readonly IDictionary<string, Entity> TempEntityList = new Dictionary<string, Entity>();
+        private System.Media.SoundPlayer MusicPlayer;
 
         private readonly Random Random = new();
 
@@ -23,146 +21,204 @@ namespace NuggetBlaster.GameCore
         private int EnemyCount     = 0;
         private int MaxEnemies     = 4;
 
+        private long EnemySpawnCooldownTimer = 0;
+        private int  EnemySpawnCooldownMS    = 400;
+
         private readonly GameForm GameUI;
+
+        public readonly IDictionary<string, Entity> EntityDataList   = new Dictionary<string, Entity>();
+        public readonly IDictionary<string, string> SoundEffectsList = new Dictionary<string, string>();
 
         public int  Score     = 0;
         public bool isRunning = false;
 
         public Engine(GameForm gameUI) {
-            GameUI = gameUI;
-            Title.Play();
+            GameUI      = gameUI;
+            MusicPlayer = new(Resources.title);
+            MusicPlayer.PlayLooping();
+
+            // Async audio player needed for SFX cannot read from resource - Copy to local
+            SoundEffectsList["boom"]  = GetResourceAsLocal(Resources.boom, "boom");
+            SoundEffectsList["shoot"] = GetResourceAsLocal(Resources.shoot, "shoot");
         }
 
-        public static int GetPPF(double PixelsPerSecond)
-        {
-            return (int) Math.Round((double)(PixelsPerSecond / Fps), 0, MidpointRounding.ToEven);
-        }
+       /***********************************************************************
+        * START - Game State Interaction Methods                              *
+        ***********************************************************************/
 
         public void StartGame()
         {
-            Score = 0;
-            ClearEntities();
-            StageOne.Play();
             isRunning = true;
+            Score     = 0;
+            ClearEntities();
+
+            MusicPlayer = new(Resources.stageOne);
+            MusicPlayer.PlayLooping();
 
             if ( !EntityDataList.ContainsKey("player"))
-                EntityDataList["player"] = new PlayerEntity(new Rectangle(15, 200, 100, 50), Resources.Nugget);
+                EntityDataList["player"] = new PlayerEntity();
         }
 
         public void GameOver()
         {
-            Title.Play();
-            ClearEntities();
             isRunning = false;
+            ClearEntities();
+
+            MusicPlayer = new(Resources.title);
+            MusicPlayer.PlayLooping();
         }
 
         public void ProcessGameTick()
         {
-            bool playShoot = false;
-            bool playBoom = false;
-            if (!EntityDataList.ContainsKey("player"))
-            {
+            CheckGameState();
+            ProcessEntityOutOfBounds();
+            ProcessEntityCollissions();
+            ProcessEntityCreation();
+            ProcessEntityProjectileCreation();
+            CheckGameState();
+        }
+
+        public void CheckGameState()
+        {
+            if (!isRunning || !EntityDataList.ContainsKey("player"))
                 GameOver();
+        }
+
+        /***********************************************************************
+         * END - Game State Interaction Methods                                *
+         ***********************************************************************/
+
+        /***********************************************************************
+         * START - Entity Interaction Methods                                  *
+         ***********************************************************************/
+
+        public void ProcessEntityCreation()
+        {
+            if (!isRunning)
                 return;
-            }
-
-            if (EntityDataList["player"].Spacebar && EntityDataList["player"].CheckCanShoot())
+            if (EnemyCount < MaxEnemies)
             {
-                Point location = new(EntityDataList["player"].SpriteRectangle.Right, EntityDataList["player"].SpriteRectangle.Top + (EntityDataList["player"].SpriteRectangle.Height / 2));
-                ProjectileEntity projectile = EntityDataList["player"].Shoot(new Rectangle(location, new Size(30, 16)), EntityDataList["player"].Team == 1 ? Resources.AllyProjectile : Resources.EnemyProjectile);
-                AddEntity(projectile, "proj-");
-                playShoot = true;
+                EnemyEntity enemy = new(new Rectangle(950, Random.Next(50, 450), 100, 100), Resources.pickle);
+                enemy.CanShoot = true;
+                enemy.MaxSpeed = Random.Next(400, 700);
+                AddEntity(enemy, "enemy-");
             }
-
-            List<string> deleteList = new();
-            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
+        }
+ 
+        public void ProcessEntityOutOfBounds()
+        {
+            if (!isRunning)
+                return;
+            IDictionary<string, Entity> entityDataListClone = EntityDataList.ToDictionary(x => x.Key, x => x.Value);
+            foreach (KeyValuePair<string, Entity> entity in entityDataListClone)
             {
-                entity.Value.CalculateMovement(GameUI.GetGameCanvasAsRectangle());
-                if (!RectangleOverlaps(entity.Value.SpriteRectangle, GameUI.GetGameCanvasAsRectangle()))
-                {
-                    deleteList.Add(entity.Key);
+                EntityDataList[entity.Key].CalculateMovement(GameUI.GetGameCanvasAsRectangle());
+                if (!RectangleOverlaps(EntityDataList[entity.Key].SpriteRectangle, GameUI.GetGameCanvasAsRectangle()))
+                    DeleteEntity(entity.Key);
+            }
+        }
+
+        public void ProcessEntityProjectileCreation()
+        {
+            if (!isRunning)
+                return;
+            IDictionary<string, Entity> entityDataListClone = EntityDataList.ToDictionary(x => x.Key, x => x.Value);
+            foreach (KeyValuePair<string, Entity> entity in entityDataListClone)
+            {
+                if (EntityDataList[entity.Key].CheckCanShoot())
+                    AddEntity(EntityDataList[entity.Key].Shoot(), "proj-");
+            }
+            if (EntityDataList.Count > entityDataListClone.Count)
+                PlaySoundAsync(SoundEffectsList["shoot"]);
+        }
+
+        public void ProcessEntityCollissions()
+        {
+            if (!isRunning)
+                return;
+            IDictionary<string, Entity> entityDataListClone = EntityDataList.ToDictionary(x => x.Key, x => x.Value);
+            foreach (KeyValuePair<string, Entity> nonProjEntity in entityDataListClone)
+            {
+                if (nonProjEntity.Value.GetType() == typeof(ProjectileEntity) || !EntityDataList.ContainsKey(nonProjEntity.Key))
                     continue;
-                }
-                if (EntityDataList[entity.Key].GetType() == typeof(EnemyEntity) && entity.Value.CheckCanShoot())
+                foreach (KeyValuePair<string, Entity> comparisonEntity in entityDataListClone)
                 {
-                    Point location = new(entity.Value.SpriteRectangle.Left - 20, entity.Value.SpriteRectangle.Top + (entity.Value.SpriteRectangle.Height / 2));
-                    ProjectileEntity projectile = entity.Value.Shoot(new Rectangle(location, new Size(30, 16)), entity.Value.Team == 1 ? Resources.AllyProjectile : Resources.EnemyProjectile);
-                    EntityIterator++;
-                    AddToTempEntityList(projectile, "proj-");
-                    playShoot = true;
-                }
-            }
-            foreach (string id in deleteList)
-                DeleteEntity(id);
-            deleteList.Clear();
-            AddAllTempEntities();
-
-            foreach (KeyValuePair<string, Entity> nonProjEntity in EntityDataList)
-            {
-                if (nonProjEntity.Value.GetType() == typeof(ProjectileEntity) || deleteList.Contains(nonProjEntity.Key))
-                {
-                    continue;
-                }
-                foreach (KeyValuePair<string, Entity> comparisonEntity in EntityDataList)
-                {
-                    if (comparisonEntity.Key == nonProjEntity.Key || deleteList.Contains(comparisonEntity.Key) || deleteList.Contains(nonProjEntity.Key))
+                    if (comparisonEntity.Key == nonProjEntity.Key || !EntityDataList.ContainsKey(comparisonEntity.Key) || !EntityDataList.ContainsKey(nonProjEntity.Key))
                         continue;
                     if (comparisonEntity.Value.GetType() == typeof(ProjectileEntity) && comparisonEntity.Value.Team != nonProjEntity.Value.Team)
                     {
                         if (RectangleOverlaps(EntityDataList[nonProjEntity.Key].SpriteRectangle, EntityDataList[comparisonEntity.Key].SpriteRectangle))
                         {
-                            deleteList.Add(comparisonEntity.Key);
-                            nonProjEntity.Value.HitPoints--;
+                            DeleteEntity(comparisonEntity.Key, true);
+
+                            EntityDataList[nonProjEntity.Key].HitPoints--;
                             if (nonProjEntity.Value.HitPoints < 1)
-                            {
-                                deleteList.Add(nonProjEntity.Key);
-                                Score += nonProjEntity.Value.PointsOnKill;
-                                playBoom = true;
-                            }
+                                DeleteEntity(nonProjEntity.Key, true);
                         }
                     }
                     else if (comparisonEntity.Value.GetType() != typeof(ProjectileEntity) && comparisonEntity.Value.Team != nonProjEntity.Value.Team)
                     {
                         if (RectangleOverlaps(EntityDataList[nonProjEntity.Key].SpriteRectangle, EntityDataList[comparisonEntity.Key].SpriteRectangle))
                         {
-                            nonProjEntity.Value.HitPoints--;
+                            EntityDataList[nonProjEntity.Key].HitPoints--;
                             if (nonProjEntity.Value.HitPoints < 1)
-                            {
-                                deleteList.Add(nonProjEntity.Key);
-                                Score += comparisonEntity.Value.PointsOnKill;
-                                playBoom = true;
-                            }
+                                DeleteEntity(nonProjEntity.Key, true);
 
-                            comparisonEntity.Value.HitPoints--;
+                            EntityDataList[comparisonEntity.Key].HitPoints--;
                             if (comparisonEntity.Value.HitPoints < 1)
-                            {
-                                deleteList.Add(comparisonEntity.Key);
-                                Score += comparisonEntity.Value.PointsOnKill;
-                                playBoom = true;
-                            }
+                                DeleteEntity(comparisonEntity.Key, true);
                         }
                     }
                 }
             }
-
-            foreach (string id in deleteList)
-                DeleteEntity(id);
-
-            if (EnemyCount < MaxEnemies)
-            {
-                EnemyEntity enemy = new(new Rectangle(950, Random.Next(50, 450), 100, 100), Resources.PlainPickle);
-                enemy.MaxSpeed = Random.Next(400, 700);
-                AddEntity(enemy, "enemy-");
-            }
-
-            if (playShoot)
-                PlaySoundAsync(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\shoot.wav");
-            if (playBoom)
-                PlaySoundAsync(@"C:\Users\Josh\source\repos\NuggetBlaster\GameFiles\Boom.wav");
-
-            if (!EntityDataList.ContainsKey("player"))
-                GameOver();
+            if (EntityDataList.Count < entityDataListClone.Count)
+                PlaySoundAsync(SoundEffectsList["boom"]);
         }
+
+
+
+        public void ClearEntities()
+        {
+            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
+                DeleteEntity(entity.Key);
+
+            EntityDataList.Clear();
+            EnemyCount     = 0;
+            EntityIterator = 0;
+        }
+
+        public void AddEntity(Entity Data, string prefix = "")
+        {
+            if (Data.GetType() != typeof(EnemyEntity) || DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > EnemySpawnCooldownTimer)
+            {
+                EntityDataList[prefix + EntityIterator.ToString()] = Data;
+                EntityIterator++;
+                if (Data.GetType() == typeof(EnemyEntity))
+                {
+                    EnemyCount++;
+                    EnemySpawnCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + EnemySpawnCooldownMS;
+                }
+            }
+        }
+
+        public void DeleteEntity(string id, bool addPoints = false)
+        {
+            if (EntityDataList.ContainsKey(id) && EntityDataList[id].GetType() == typeof(PlayerEntity))
+                isRunning = false;
+            if (EntityDataList.ContainsKey(id) && EntityDataList[id].GetType() == typeof(EnemyEntity))
+                EnemyCount--;
+            if (addPoints)
+                Score += EntityDataList[id].PointsOnKill;
+            EntityDataList.Remove(id);
+        }
+
+       /***********************************************************************
+        * END - Entity Interaction Methods                                    *
+        ***********************************************************************/
+
+       /***********************************************************************
+        * START - UI Interaction Methods                                      *
+        ***********************************************************************/
 
         public void GameKeyAction(string key, bool pressed)
         {
@@ -179,60 +235,25 @@ namespace NuggetBlaster.GameCore
                 if (key.ToLower() == "space")
                     EntityDataList["player"].Spacebar = pressed;
             }
-            else if(key.ToLower() == "return")
-            {
+            else if (key.ToLower() == "return")
                 StartGame();
-            }
-        }
-
-        public void ClearEntities()
-        {
-            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
-                DeleteEntity(entity.Key);
-
-            EntityDataList.Clear();
-            EnemyCount     = 0;
-            EntityIterator = 0;
-        }
-
-        public void AddEntity(Entity Data, string prefix = "")
-        {
-            EntityDataList[prefix + EntityIterator.ToString()] = Data;
-            EntityIterator++;
-            if (Data.GetType() == typeof(EnemyEntity))
-                EnemyCount++;
-        }
-
-        public void AddToTempEntityList(Entity entity, string prefix = "")
-        {
-            TempEntityList[prefix + EntityIterator.ToString()] = entity;
-            EntityIterator++;
-            if (entity.GetType() == typeof(EnemyEntity))
-                EnemyCount++;
-        }
-
-        public void AddAllTempEntities()
-        {
-            foreach (KeyValuePair<string, Entity> entity in TempEntityList)
-            {
-                EntityDataList[entity.Key] = entity.Value;
-            }
-            TempEntityList.Clear();
-        }
-
-        public void DeleteEntity(string id)
-        {
-            if (EntityDataList.ContainsKey(id) && EntityDataList[id].GetType() == typeof(EnemyEntity))
-                EnemyCount--;
-            EntityDataList.Remove(id);
         }
 
         public static void PlaySoundAsync(string path)
         {
             MediaPlayer mediaPlayer = new();
             mediaPlayer.Open(new Uri(path));
+            mediaPlayer.Volume = 1;
             mediaPlayer.Play();
         }
+
+       /***********************************************************************
+        * END - UI Interaction Methods                                        *
+        ***********************************************************************/
+
+       /***********************************************************************
+        * START - Utility Methods                                             *
+        ***********************************************************************/
 
         public IDictionary<string, Rectangle> GetEntityRectangleList()
         {
@@ -258,5 +279,25 @@ namespace NuggetBlaster.GameCore
         {
             return rectangleOne.IntersectsWith(rectangleTwo);
         }
+
+        public static int GetPPF(double PixelsPerSecond)
+        {
+            return (int)Math.Round((double)(PixelsPerSecond / Fps), 0, MidpointRounding.ToEven);
+        }
+
+        public static dynamic GetResourceAsLocal(dynamic file, string fileName)
+        {
+            string fullPath = AppDomain.CurrentDomain.BaseDirectory + @"/" + fileName + ".wav";
+            if (!File.Exists(fullPath))
+            using (var fileStream = File.Create(fullPath))
+            {
+                    file.CopyTo(fileStream);
+            }
+            return fullPath;
+        }
+
+       /***********************************************************************
+        * END - Utility Methods                                               *
+        ***********************************************************************/
     }
 }
