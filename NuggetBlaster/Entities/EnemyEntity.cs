@@ -11,7 +11,7 @@ namespace NuggetBlaster.Entities
             MoveLeft           = true;
             Team               = 2;
             PointsOnKill       = 100;
-            ShootCooldownMS    = 1500;
+            ShootCooldownMS    = 2500;
             ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS/5;
         }
 
@@ -22,7 +22,7 @@ namespace NuggetBlaster.Entities
             return new ProjectileEntity(new Rectangle(location, new Size(30, 16)), Resources.enemyProjectile)
             {
                 MoveLeft = true,
-                MaxSpeed = (int) (MaxSpeed * 1.2),
+                MaxSpeed = (int) (MaxSpeed * 1.4),
                 Team     = Team
             };
         }

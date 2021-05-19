@@ -7,10 +7,10 @@ namespace NuggetBlaster.Entities
     public class PlayerEntity : Entity
     {
         public PlayerEntity() : base(new Rectangle(15, 200, 100, 50), Resources.nugget) {
-            BaseSpeed       = 400;
+            BaseSpeed       = 200;
             Team            = 1;
             CanShoot        = true;
-            ShootCooldownMS = 200;
+            ShootCooldownMS = 400;
         }
 
         public override bool CheckCanShoot()

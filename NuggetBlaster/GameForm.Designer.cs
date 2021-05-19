@@ -43,7 +43,7 @@ namespace NuggetBlaster
             // GameCanvas
             // 
             this.GameCanvas.BackColor = System.Drawing.Color.Transparent;
-            this.GameCanvas.Location = new System.Drawing.Point(0, -3);
+            this.GameCanvas.Location = new System.Drawing.Point(0, 0);
             this.GameCanvas.Margin = new System.Windows.Forms.Padding(0);
             this.GameCanvas.Name = "GameCanvas";
             this.GameCanvas.Size = new System.Drawing.Size(960, 540);
@@ -56,12 +56,14 @@ namespace NuggetBlaster
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(2)))), ((int)(((byte)(104)))));
-            this.ClientSize = new System.Drawing.Size(954, 536);
+            this.ClientSize = new System.Drawing.Size(960, 540);
             this.Controls.Add(this.GameCanvas);
             this.Name = "GameForm";
             this.Text = "Nugget Blaster";
+            this.ResizeEnd += new System.EventHandler(this.GameForm_ResizeEnd);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.GameKeyDown);
             this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.GameKeyUp);
+            this.Resize += new System.EventHandler(this.GameForm_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.GameCanvas)).EndInit();
             this.ResumeLayout(false);
 

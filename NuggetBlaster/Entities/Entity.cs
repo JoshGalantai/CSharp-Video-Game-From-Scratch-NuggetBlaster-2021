@@ -6,7 +6,7 @@ namespace NuggetBlaster.Entities
 {
     public abstract class Entity
     {
-        public virtual int BaseSpeed { get; set; } = 400;
+        public virtual int BaseSpeed { get; set; } = 200;
         public virtual int MaxSpeed { get; set; } = 0;
         public virtual bool MoveRight { get; set; } = false;
         public virtual bool MoveLeft { get; set; } = false;
@@ -43,11 +43,11 @@ namespace NuggetBlaster.Entities
             return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer;
         }
 
-        public void CalculateMovement(Rectangle bounds)
+        public void CalculateMovement(Rectangle bounds, int ticks)
         {
             Point location = SpriteRectangle.Location;
-            location.X += (MoveRight ? GameCore.Engine.GetPPF(GetSpeed()) : 0) - (MoveLeft ? GameCore.Engine.GetPPF(GetSpeed()) : 0);
-            location.Y += (MoveDown  ? GameCore.Engine.GetPPF(GetSpeed()) : 0) - (MoveUp   ? GameCore.Engine.GetPPF(GetSpeed()) : 0);
+            location.X += (MoveRight ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0) - (MoveLeft ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0);
+            location.Y += (MoveDown  ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0) - (MoveUp   ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0);
             ProcessMovement(bounds, new Rectangle(location, SpriteRectangle.Size));
         }
 
@@ -56,10 +56,11 @@ namespace NuggetBlaster.Entities
             SpriteRectangle = proposedRectangle;
         }
 
-        public double GetSpeed()
+        public double GetSpeed(int ticks)
         {
+            int totalDistance = MaxSpeed * ticks;
             // If Entity is moving diagonally we must reduce speed for movement calculations. (1 up/down & 1 left/right is greater than 1 total unit of distance)
-            double speed = ((Convert.ToInt32(MoveRight) + Convert.ToInt32(MoveLeft) + Convert.ToInt32(MoveUp) + Convert.ToInt32(MoveDown)) == 2) ? MaxSpeed / Math.Sqrt(2) : MaxSpeed;
+            double speed = ((Convert.ToInt32(MoveRight) + Convert.ToInt32(MoveLeft) + Convert.ToInt32(MoveUp) + Convert.ToInt32(MoveDown)) == 2) ? totalDistance / Math.Sqrt(2) : totalDistance;
 
             return Math.Round((double)speed, 0, MidpointRounding.ToEven);
         }
