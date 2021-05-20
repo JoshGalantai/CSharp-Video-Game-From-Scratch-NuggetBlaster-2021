@@ -19,16 +19,20 @@ namespace NuggetBlaster.Entities
         public virtual int HitPoints { get; set; } = 1;
         public virtual long ShootCooldownTimer { get; set; } = 0;
         public virtual int ShootCooldownMS { get; set; } = 1500;
-        public virtual Image Sprite { get; set; } = Resources.pickle;
+        public virtual Image SpriteOriginal { get; set; } = Resources.pickle;
+        public virtual Image SpriteResized { get; set; } = Resources.pickle;
         public virtual Rectangle SpriteRectangle { get; set; } = new Rectangle(0, 0, 0, 0);
+        public virtual Rectangle CanvasRectangle { get; set; } = new Rectangle(0, 0, 0, 0);
         public virtual int PointsOnKill { get; set; } = 0;
+        
 
-        public Entity(Rectangle spriteRectangle, Image sprite = null)
+        public Entity(/*Rectangle CanvasRectangle, */Rectangle spriteRectangle, Image sprite = null)
         {
             MaxSpeed        = BaseSpeed;
             SpriteRectangle = spriteRectangle;
             if (sprite != null)
-                Sprite = sprite;
+                SpriteOriginal = sprite;
+            SpriteResized = GameForm.ResizeImage(SpriteOriginal, SpriteRectangle);
         }
 
         public abstract ProjectileEntity Shoot();

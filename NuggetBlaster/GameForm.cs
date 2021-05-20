@@ -22,7 +22,7 @@ namespace NuggetBlaster
         private          long msDraw       = 0;
         private          long msProcessing = 0;
 
-        private readonly double AspectRatio = (double)16/9;
+        private readonly double AspectRatio       = (double)16/9;
         private readonly int    CanvasEdgePadding = 10;
 
         private readonly Font ScoreLabelFont = new("Arial Narrow", 26.25F, FontStyle.Regular, GraphicsUnit.Point);
@@ -90,17 +90,23 @@ namespace NuggetBlaster
 
         private void GameForm_ResizeEnd(object sender, EventArgs e)
         {
-            ResizeUI();
+            if (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width)
+                ResizeUI();
         }
 
         private void GameForm_Resize(object sender, EventArgs e)
         {
-            if (Size.Width != Size.Height * AspectRatio)
-                Size = new Size(Size.Width, (int)(Size.Width/AspectRatio));
+            ResizeUI();
         }
 
         private void ResizeUI()
         {
+            if (ClientSize.Height == 0 || ClientSize.Width == 0)
+                return;
+
+            if (Size.Width != Size.Height * AspectRatio)
+                Size = new Size(Size.Width, (int)(Size.Width / AspectRatio));
+
             double scaling    = ClientSize.Height / (double)GameCanvas.Height;
             GameCanvas.Height = ClientSize.Height;
             GameCanvas.Width  = ClientSize.Width;
@@ -112,6 +118,8 @@ namespace NuggetBlaster
             Background = ResizeImage(Resources.background, BackgroundRect);
             Keys       = ResizeImage(Resources.keysWhite, KeysRect);
             Title      = ResizeImage(Resources.nuggetBlasterTitle, TitleRect);
+
+            GameEngine.ProcessEntityRescale(scaling);
         }
 
         public static Image ResizeImage(Image image, Rectangle rect)

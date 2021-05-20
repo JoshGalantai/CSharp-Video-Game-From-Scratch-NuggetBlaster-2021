@@ -18,7 +18,6 @@ namespace NuggetBlaster.GameCore
         public       long TickCount;
         public       int  TicksToProcess;
 
-
         private System.Media.SoundPlayer MusicPlayer;
 
         private readonly Random Random = new();
@@ -46,9 +45,6 @@ namespace NuggetBlaster.GameCore
             // Async audio player needed for SFX cannot read from resource - Copy to local
             SoundEffectsList["boom"]  = GetResourceAsLocal(Resources.boom, "boom");
             SoundEffectsList["shoot"] = GetResourceAsLocal(Resources.shoot, "shoot");
-
-            MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            TickCount = 0;
         }
 
        /***********************************************************************
@@ -121,6 +117,17 @@ namespace NuggetBlaster.GameCore
         /***********************************************************************
          * START - Entity Interaction Methods                                  *
          ***********************************************************************/
+
+        public void ProcessEntityRescale(double scaling)
+        {
+            if (!IsRunning)
+                return;
+            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
+            {
+                entity.Value.SpriteRectangle = GameForm.ResizeRectangle(entity.Value.SpriteRectangle, scaling);
+                entity.Value.SpriteResized   = GameForm.ResizeImage(entity.Value.SpriteOriginal, entity.Value.SpriteRectangle);
+            }
+        }
 
         public void ProcessEntityCreation()
         {
@@ -295,12 +302,12 @@ namespace NuggetBlaster.GameCore
 
         public IDictionary<string, Image> GetEntitySpriteList()
         {
-            IDictionary<string, Image> rectangleList = new Dictionary<string, Image>();
+            IDictionary<string, Image> spriteList = new Dictionary<string, Image>();
             foreach (KeyValuePair<string, Entity> entity in EntityDataList)
             {
-                rectangleList[entity.Key] = entity.Value.Sprite;
+                spriteList[entity.Key] = entity.Value.SpriteResized;
             }
-            return rectangleList;
+            return spriteList;
         }
 
         public static bool RectangleOverlaps(Rectangle rectangleOne, Rectangle rectangleTwo)
