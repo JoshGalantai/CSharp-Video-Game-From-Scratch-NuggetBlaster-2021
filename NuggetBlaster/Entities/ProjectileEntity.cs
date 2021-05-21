@@ -5,7 +5,7 @@ namespace NuggetBlaster.Entities
 {
     public class ProjectileEntity : Entity
     {
-        public ProjectileEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite) { }
+        public ProjectileEntity(Rectangle GameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(GameCanvas, spriteRectangle, sprite) { }
 
         public override ProjectileEntity Shoot()
         {

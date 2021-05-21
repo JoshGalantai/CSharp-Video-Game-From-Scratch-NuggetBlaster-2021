@@ -6,7 +6,7 @@ namespace NuggetBlaster.Entities
 {
     class EnemyEntity : Entity
     {
-        public EnemyEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite)
+        public EnemyEntity(Rectangle gameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(gameCanvas, spriteRectangle, sprite)
         {
             MoveLeft           = true;
             Team               = 2;
@@ -18,12 +18,13 @@ namespace NuggetBlaster.Entities
         public override ProjectileEntity Shoot()
         {
             ShootCooldown();
-            Point location = new(SpriteRectangle.Left - 20, SpriteRectangle.Top + (SpriteRectangle.Height / 2));
-            return new ProjectileEntity(new Rectangle(location, new Size(30, 16)), Resources.enemyProjectile)
+            Point location = new(SpriteRectangle.Left - 20, SpriteRectangle.Top + (SpriteRectangle.Height/2) - (ProjectileHeight/2));
+            return new ProjectileEntity(GameRectangle, new Rectangle(location, new Size(ProjectileWidth, ProjectileHeight)), Resources.enemyProjectile)
             {
-                MoveLeft = true,
-                MaxSpeed = (int) (MaxSpeed * 1.4),
-                Team     = Team
+                MoveLeft   = true,
+                BaseSpeed  = BaseSpeed,
+                SpeedMulti = 1.4,
+                Team       = Team
             };
         }
     }

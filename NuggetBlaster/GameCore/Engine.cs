@@ -6,19 +6,20 @@ using System.Windows.Media;
 using NuggetBlaster.Properties;
 using System.Linq;
 using System.IO;
+using System.Media;
 
 namespace NuggetBlaster.GameCore
 {
     class Engine
     {
         public const int  Fps                   = 30;
-        public const int  MaxMSCatchUpPerTick   = 100;
+        public const int  MaxMSCatchUpPerTick   = 50;
         public const int  MaxMSFallBehindCutoff = 1000;
         public       long MSStartTime;
-        public       long TickCount;
+        public       int  TickCount;
         public       int  TicksToProcess;
 
-        private System.Media.SoundPlayer MusicPlayer;
+        private SoundPlayer MusicPlayer;
 
         private readonly Random Random = new();
 
@@ -29,7 +30,8 @@ namespace NuggetBlaster.GameCore
         private long EnemySpawnCooldownTimer = 0;
         private int  EnemySpawnCooldownMS    = 400;
 
-        private readonly GameForm GameUI;
+        private readonly GameForm  GameUI;
+        public           Rectangle GameArea;
 
         public readonly IDictionary<string, Entity> EntityDataList   = new Dictionary<string, Entity>();
         public readonly IDictionary<string, string> SoundEffectsList = new Dictionary<string, string>();
@@ -38,7 +40,8 @@ namespace NuggetBlaster.GameCore
         public bool IsRunning = false;
 
         public Engine(GameForm gameUI) {
-            GameUI      = gameUI;
+            GameUI   = gameUI;
+
             MusicPlayer = new(Resources.title);
             MusicPlayer.PlayLooping();
 
@@ -53,6 +56,7 @@ namespace NuggetBlaster.GameCore
 
         public void StartGame()
         {
+            GameArea = GameUI.GetGameAreaAsRectangle();
             IsRunning = true;
             Score     = 0;
             ClearEntities();
@@ -61,7 +65,7 @@ namespace NuggetBlaster.GameCore
             MusicPlayer.PlayLooping();
 
             if ( !EntityDataList.ContainsKey("player"))
-                EntityDataList["player"] = new PlayerEntity();
+                EntityDataList["player"] = new PlayerEntity(GameArea);
 
             MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             TickCount   = 0;
@@ -78,20 +82,7 @@ namespace NuggetBlaster.GameCore
 
         public void ProcessGameTick()
         {
-                   TicksToProcess = 1;
-            long   msElapsed      = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - MSStartTime;
-            double msPerTick      = 1000 / Fps;
-            double msBehind       = msElapsed - (TickCount * msPerTick);
-            if (msBehind > MaxMSFallBehindCutoff)
-            {
-                MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                TickCount = 0;
-            }
-            else if (msBehind >= msPerTick * 2)
-            {
-                TicksToProcess = msBehind > MaxMSCatchUpPerTick ? (int)(MaxMSCatchUpPerTick / msPerTick) : (int)(msBehind / msPerTick);
-            }
-            TickCount += TicksToProcess;
+            CalculateTicksToProcess();
 
             if (IsRunning)
             {
@@ -118,26 +109,13 @@ namespace NuggetBlaster.GameCore
          * START - Entity Interaction Methods                                  *
          ***********************************************************************/
 
-        public void ProcessEntityRescale(double scaling)
-        {
-            if (!IsRunning)
-                return;
-            foreach (KeyValuePair<string, Entity> entity in EntityDataList)
-            {
-                entity.Value.SpriteRectangle = GameForm.ResizeRectangle(entity.Value.SpriteRectangle, scaling);
-                entity.Value.SpriteResized   = GameForm.ResizeImage(entity.Value.SpriteOriginal, entity.Value.SpriteRectangle);
-            }
-        }
-
         public void ProcessEntityCreation()
         {
             if (!IsRunning)
                 return;
             if (EnemyCount < MaxEnemies)
             {
-                EnemyEntity enemy = new(new Rectangle(950, Random.Next(50, 450), 100, 100), Resources.pickle);
-                enemy.CanShoot = true;
-                enemy.MaxSpeed = Random.Next(enemy.BaseSpeed, enemy.BaseSpeed*2);
+                EnemyEntity enemy = GetStage1EnemyEntity();
                 AddEntity(enemy, "enemy-");
             }
         }
@@ -149,8 +127,8 @@ namespace NuggetBlaster.GameCore
                 return;
             foreach (string key in EntityDataList.Keys.ToArray())
             {
-                EntityDataList[key].CalculateMovement(GameUI.GetGameCanvasAsRectangle(), TicksToProcess);
-                if (!RectangleOverlaps(EntityDataList[key].SpriteRectangle, GameUI.GetGameCanvasAsRectangle()))
+                EntityDataList[key].CalculateMovement(TicksToProcess);
+                if (!RectangleOverlaps(EntityDataList[key].SpriteRectangle, GameArea))
                     DeleteEntity(key);
             }
         }
@@ -247,6 +225,14 @@ namespace NuggetBlaster.GameCore
             EntityDataList.Remove(id);
         }
 
+        public EnemyEntity GetStage1EnemyEntity()
+        {
+            EnemyEntity entity = new(GameArea, new Rectangle(GameArea.Width, Random.Next(10, GameArea.Height-(int)(GameArea.Width * 0.1)), (int)(GameArea.Width*0.1), (int)(GameArea.Width*0.1)), Resources.pickle);
+            entity.CanShoot    = true;
+            entity.BaseSpeed   = Random.Next(200, 400)/1000.0;
+            return entity;
+        }
+
        /***********************************************************************
         * END - Entity Interaction Methods                                    *
         ***********************************************************************/
@@ -276,19 +262,45 @@ namespace NuggetBlaster.GameCore
 
         public static void PlaySoundAsync(string path)
         {
-            MediaPlayer mediaPlayer = new();
-            mediaPlayer.Open(new Uri(path));
-            mediaPlayer.Volume = 1;
-            mediaPlayer.Play();
+            MediaPlayer MediaPlayer = new();
+            MediaPlayer.Open(new Uri(path));
+            MediaPlayer.Volume = 1;
+            MediaPlayer.Play();
         }
 
-       /***********************************************************************
-        * END - UI Interaction Methods                                        *
-        ***********************************************************************/
+        public void CacheResizedEntitySprite(Image image, string key)
+        {
+            if (!EntityDataList.ContainsKey(key))
+                return;
 
-       /***********************************************************************
-        * START - Utility Methods                                             *
-        ***********************************************************************/
+            EntityDataList[key].SpriteCached = image;
+        }
+
+        /***********************************************************************
+         * END - UI Interaction Methods                                        *
+         ***********************************************************************/
+
+        /***********************************************************************
+         * START - Utility Methods                                             *
+         ***********************************************************************/
+
+        public void CalculateTicksToProcess()
+        {
+                               TicksToProcess = 1;
+            long   msElapsed      = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - MSStartTime;
+            double msPerTick      = 1000 / Fps;
+            double msBehind       = msElapsed - (TickCount * msPerTick);
+            if (msBehind > MaxMSFallBehindCutoff)
+            {
+                MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                TickCount = 0;
+            }
+            else if (msBehind >= msPerTick * 2)
+            {
+                TicksToProcess = msBehind > MaxMSCatchUpPerTick ? (int)(MaxMSCatchUpPerTick / msPerTick) : (int)(msBehind / msPerTick);
+            }
+            TickCount += TicksToProcess;
+        }
 
         public IDictionary<string, Rectangle> GetEntityRectangleList()
         {
@@ -300,12 +312,12 @@ namespace NuggetBlaster.GameCore
             return rectangleList;
         }
 
-        public IDictionary<string, Image> GetEntitySpriteList()
+        public IDictionary<string, Image> GetEntitySpriteList(bool getOriginal = false)
         {
             IDictionary<string, Image> spriteList = new Dictionary<string, Image>();
             foreach (KeyValuePair<string, Entity> entity in EntityDataList)
             {
-                spriteList[entity.Key] = entity.Value.SpriteResized;
+                spriteList[entity.Key] = getOriginal ? entity.Value.SpriteOriginal : entity.Value.SpriteCached;
             }
             return spriteList;
         }
@@ -324,9 +336,9 @@ namespace NuggetBlaster.GameCore
         {
             string fullPath = AppDomain.CurrentDomain.BaseDirectory + @"/" + fileName + ".wav";
             if (!File.Exists(fullPath))
-            using (var fileStream = File.Create(fullPath))
             {
-                    file.CopyTo(fileStream);
+                using var fileStream = File.Create(fullPath);
+                file.CopyTo(fileStream);
             }
             return fullPath;
         }

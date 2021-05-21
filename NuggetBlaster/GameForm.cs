@@ -39,9 +39,9 @@ namespace NuggetBlaster
             ResizeUI();
         }
 
-        public Rectangle GetGameCanvasAsRectangle()
+        public Rectangle GetGameAreaAsRectangle()
         {
-            return new Rectangle(GameCanvas.Location, GameCanvas.Size);
+             return new Rectangle(0, 0, ClientSize.Width, ClientSize.Height);
         }
 
         private void GameKeyDown(object sender, KeyEventArgs e)
@@ -76,9 +76,19 @@ namespace NuggetBlaster
 
             if (GameEngine.IsRunning)
             {
-                IDictionary<string, Image> sprites = GameEngine.GetEntitySpriteList();
-                foreach (KeyValuePair<string, Rectangle> rectangle in GameEngine.GetEntityRectangleList())
-                    e.Graphics.DrawImage(sprites[rectangle.Key], rectangle.Value);
+                double UIScaling = (double)GameCanvas.Width / GameEngine.GameArea.Width;
+                IDictionary<string, Image> resizedSprites  = GameEngine.GetEntitySpriteList();
+                IDictionary<string, Image> originalSprites = GameEngine.GetEntitySpriteList(true);
+                Rectangle resizedRectangle;
+                foreach (KeyValuePair<string, Rectangle> rectangle in GameEngine.GetEntityRectangleList()) {
+                    resizedRectangle = ResizeRectangle(rectangle.Value, UIScaling);
+                    if (resizedRectangle.Width != resizedSprites[rectangle.Key].Width)
+                    {
+                        resizedSprites[rectangle.Key] = ResizeImage(originalSprites[rectangle.Key], resizedRectangle);
+                        GameEngine.CacheResizedEntitySprite(resizedSprites[rectangle.Key], rectangle.Key);
+                    }
+                    e.Graphics.DrawImage(resizedSprites[rectangle.Key], resizedRectangle);
+                }
             }
             else
             {
@@ -90,24 +100,23 @@ namespace NuggetBlaster
 
         private void GameForm_ResizeEnd(object sender, EventArgs e)
         {
-            if (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width)
+            if (ClientSize.Height != 0 && ClientSize.Width != 0 && (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width))
                 ResizeUI();
         }
 
         private void GameForm_Resize(object sender, EventArgs e)
         {
-            ResizeUI();
+            if (ClientSize.Height != 0 && ClientSize.Width != 0 && (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width))
+                if (Size.Width != Size.Height * AspectRatio)
+                    Size = new Size(Size.Width, (int)(Size.Width / AspectRatio));
         }
 
         private void ResizeUI()
         {
-            if (ClientSize.Height == 0 || ClientSize.Width == 0)
-                return;
-
             if (Size.Width != Size.Height * AspectRatio)
                 Size = new Size(Size.Width, (int)(Size.Width / AspectRatio));
 
-            double scaling    = ClientSize.Height / (double)GameCanvas.Height;
+            double scaling    = ClientSize.Width / (double)GameCanvas.Width;
             GameCanvas.Height = ClientSize.Height;
             GameCanvas.Width  = ClientSize.Width;
 
@@ -118,8 +127,6 @@ namespace NuggetBlaster
             Background = ResizeImage(Resources.background, BackgroundRect);
             Keys       = ResizeImage(Resources.keysWhite, KeysRect);
             Title      = ResizeImage(Resources.nuggetBlasterTitle, TitleRect);
-
-            GameEngine.ProcessEntityRescale(scaling);
         }
 
         public static Image ResizeImage(Image image, Rectangle rect)
