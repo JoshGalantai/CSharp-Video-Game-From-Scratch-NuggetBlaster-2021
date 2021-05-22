@@ -90,6 +90,35 @@ namespace NuggetBlaster.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream bossStage {
+            get {
+                return ResourceManager.GetStream("bossStage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap coolestPickle {
+            get {
+                object obj = ResourceManager.GetObject("coolestPickle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap coolPickle {
+            get {
+                object obj = ResourceManager.GetObject("coolPickle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap enemyProjectile {
@@ -116,6 +145,16 @@ namespace NuggetBlaster.Properties {
             get {
                 object obj = ResourceManager.GetObject("nugget", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon nugget_1lg_icon {
+            get {
+                object obj = ResourceManager.GetObject("nugget_1lg_icon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
             }
         }
         
@@ -154,6 +193,24 @@ namespace NuggetBlaster.Properties {
         internal static System.IO.UnmanagedMemoryStream stageOne {
             get {
                 return ResourceManager.GetStream("stageOne", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream StageThree {
+            get {
+                return ResourceManager.GetStream("StageThree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream stageTwo {
+            get {
+                return ResourceManager.GetStream("stageTwo", resourceCulture);
             }
         }
         

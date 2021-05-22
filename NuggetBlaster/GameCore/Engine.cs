@@ -12,12 +12,16 @@ namespace NuggetBlaster.GameCore
 {
     class Engine
     {
-        public const int  Fps                   = 30;
-        public const int  MaxMSCatchUpPerTick   = 50;
+        public const int  Fps                   = 60;
+        public const int  MaxMSCatchUpPerTick   = 40;
         public const int  MaxMSFallBehindCutoff = 1000;
         public       long MSStartTime;
-        public       int  TickCount;
+        public       int  TicksCurrent;
+        public       int  TicksTotal;
         public       int  TicksToProcess;
+
+        public int Stage2StartMS = 60000;
+        public int Stage3StartMS = 120000;
 
         private SoundPlayer MusicPlayer;
 
@@ -25,10 +29,11 @@ namespace NuggetBlaster.GameCore
 
         private int EntityIterator = 0;
         private int EnemyCount     = 0;
-        private int MaxEnemies     = 4;
+        private int MaxEnemies     = 6;
+        private int GameStage      = 2;
 
         private long EnemySpawnCooldownTimer = 0;
-        private int  EnemySpawnCooldownMS    = 400;
+        private int  EnemySpawnCooldownMS    = 300;
 
         private readonly GameForm  GameUI;
         public           Rectangle GameArea;
@@ -50,25 +55,29 @@ namespace NuggetBlaster.GameCore
             SoundEffectsList["shoot"] = GetResourceAsLocal(Resources.shoot, "shoot");
         }
 
-       /***********************************************************************
-        * START - Game State Interaction Methods                              *
-        ***********************************************************************/
+        /***********************************************************************
+         * START - Game State Interaction Methods                              *
+         ***********************************************************************/
 
         public void StartGame()
         {
             GameArea = GameUI.GetGameAreaAsRectangle();
             IsRunning = true;
-            Score     = 0;
+            Score = 0;
+            GameStage = 1;
+            TicksTotal = 0;
             ClearEntities();
 
             MusicPlayer = new(Resources.stageOne);
             MusicPlayer.PlayLooping();
 
-            if ( !EntityDataList.ContainsKey("player"))
+            if (!EntityDataList.ContainsKey("player"))
                 EntityDataList["player"] = new PlayerEntity(GameArea);
 
+            EntityDataList["player"].HitPoints = 100;
+
             MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            TickCount   = 0;
+            TicksCurrent   = 0;
         }
 
         public void GameOver()
@@ -86,6 +95,7 @@ namespace NuggetBlaster.GameCore
 
             if (IsRunning)
             {
+                ProcessGameStage();
                 CheckGameState();
                 ProcessEntityMovement();
                 ProcessEntityCollissions();
@@ -99,6 +109,23 @@ namespace NuggetBlaster.GameCore
         {
             if (!IsRunning || !EntityDataList.ContainsKey("player"))
                 GameOver();
+        }
+
+        public void ProcessGameStage()
+        {
+            double msPerTick = 1000.0 / Fps;
+            if (TicksTotal * msPerTick > Stage3StartMS && GameStage == 2)
+            {
+                GameStage = 3;
+                MusicPlayer = new(Resources.StageThree);
+                MusicPlayer.PlayLooping();
+            }
+            else if (TicksTotal * msPerTick > Stage2StartMS && GameStage == 1)
+            {
+                GameStage = 2;
+                MusicPlayer = new(Resources.stageTwo);
+                MusicPlayer.PlayLooping();
+            }
         }
 
         /***********************************************************************
@@ -115,7 +142,7 @@ namespace NuggetBlaster.GameCore
                 return;
             if (EnemyCount < MaxEnemies)
             {
-                EnemyEntity enemy = GetStage1EnemyEntity();
+                EnemyEntity enemy = GetEnemyEntity();
                 AddEntity(enemy, "enemy-");
             }
         }
@@ -225,21 +252,56 @@ namespace NuggetBlaster.GameCore
             EntityDataList.Remove(id);
         }
 
+        public EnemyEntity GetEnemyEntity()
+        {
+            int enemySeed = Random.Next(0, 100);
+            if (enemySeed > 70)
+                return GetStage3EnemyEntity();
+            else if (enemySeed > 40)
+                return GetStage2EnemyEntity();
+            else
+                return GetStage1EnemyEntity();
+        }
+
         public EnemyEntity GetStage1EnemyEntity()
         {
             EnemyEntity entity = new(GameArea, new Rectangle(GameArea.Width, Random.Next(10, GameArea.Height-(int)(GameArea.Width * 0.1)), (int)(GameArea.Width*0.1), (int)(GameArea.Width*0.1)), Resources.pickle);
-            entity.CanShoot    = true;
-            entity.BaseSpeed   = Random.Next(200, 400)/1000.0;
+            entity.BaseSpeed   = Random.Next(400, 600)/1000.0;
+            entity.HitPoints   = 1;
             return entity;
         }
 
-       /***********************************************************************
-        * END - Entity Interaction Methods                                    *
-        ***********************************************************************/
+        public EnemyEntity GetStage2EnemyEntity()
+        {
+            if (GameStage < 2)
+                return GetEnemyEntity();
+            EnemyEntity entity  = new(GameArea, new Rectangle(GameArea.Width, Random.Next(10, GameArea.Height - (int)(GameArea.Width * 0.1)), (int)(GameArea.Width * 0.1), (int)(GameArea.Width * 0.1)), Resources.coolPickle);
+            entity.CanShoot     = true;
+            entity.BaseSpeed    = Random.Next(200, 400) / 1000.0;
+            entity.HitPoints    = 2;
+            entity.PointsOnKill = 300;
+            return entity;
+        }
 
-       /***********************************************************************
-        * START - UI Interaction Methods                                      *
-        ***********************************************************************/
+        public EnemyEntity GetStage3EnemyEntity()
+        {
+            if (GameStage < 3)
+                return GetEnemyEntity();
+            EnemyEntity entity  = new(GameArea, new Rectangle(GameArea.Width, Random.Next(10, GameArea.Height - (int)(GameArea.Width * 0.1)), (int)(GameArea.Width * 0.1), (int)(GameArea.Width * 0.1)), Resources.coolestPickle);
+            entity.CanShoot     = true;
+            entity.BaseSpeed    = Random.Next(400, 600) / 1000.0;
+            entity.HitPoints    = 4;
+            entity.PointsOnKill = 900;
+            return entity;
+        }
+
+        /***********************************************************************
+         * END - Entity Interaction Methods                                    *
+         ***********************************************************************/
+
+        /***********************************************************************
+         * START - UI Interaction Methods                                      *
+         ***********************************************************************/
 
         public void GameKeyAction(string key, bool pressed)
         {
@@ -286,20 +348,21 @@ namespace NuggetBlaster.GameCore
 
         public void CalculateTicksToProcess()
         {
-                               TicksToProcess = 1;
+            TicksToProcess = 1;
             long   msElapsed      = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - MSStartTime;
-            double msPerTick      = 1000 / Fps;
-            double msBehind       = msElapsed - (TickCount * msPerTick);
+            double msPerTick      = 1000.0 / Fps;
+            double msBehind       = msElapsed - (TicksCurrent * msPerTick);
             if (msBehind > MaxMSFallBehindCutoff)
             {
                 MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                TickCount = 0;
+                TicksCurrent = 0;
             }
-            else if (msBehind >= msPerTick * 2)
+            else if (msBehind > msPerTick)
             {
                 TicksToProcess = msBehind > MaxMSCatchUpPerTick ? (int)(MaxMSCatchUpPerTick / msPerTick) : (int)(msBehind / msPerTick);
             }
-            TickCount += TicksToProcess;
+            TicksCurrent += TicksToProcess;
+            TicksTotal += TicksToProcess;
         }
 
         public IDictionary<string, Rectangle> GetEntityRectangleList()

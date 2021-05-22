@@ -7,7 +7,7 @@ namespace NuggetBlaster.Entities
     public class PlayerEntity : Entity
     {
         public PlayerEntity(Rectangle gameCanvas) : base(gameCanvas, new Rectangle(0, gameCanvas.Height/2, (int)(gameCanvas.Width*0.1), (int)(gameCanvas.Width*0.05)), Resources.nugget) {
-            BaseSpeed       = 0.3;
+            BaseSpeed       = 0.2;
             Team            = 1;
             CanShoot        = true;
             ShootCooldownMS = 400;

@@ -29,6 +29,8 @@ namespace NuggetBlaster
         /// </summary>
         private void InitializeComponent()
         {
+            this.Icon = Properties.Resources.nugget_1lg_icon;
+
             this.components = new System.ComponentModel.Container();
             this.GameTimer = new System.Windows.Forms.Timer(this.components);
             this.GameCanvas = new System.Windows.Forms.PictureBox();

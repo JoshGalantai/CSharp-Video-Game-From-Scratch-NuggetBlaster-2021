@@ -17,15 +17,16 @@ namespace NuggetBlaster
         private Rectangle KeysRect;
         private Image     Title       = Resources.nuggetBlasterTitle;
         private Rectangle TitleRect;
+        private Font      ScoreLabelFont = new("Arial Narrow", 1, FontStyle.Regular, GraphicsUnit.Pixel);
 
-        private readonly bool Analytics    = true;
+        private readonly bool Analytics    = false;
         private          long msDraw       = 0;
         private          long msProcessing = 0;
 
         private readonly double AspectRatio       = (double)16/9;
         private readonly int    CanvasEdgePadding = 10;
 
-        private readonly Font ScoreLabelFont = new("Arial Narrow", 26.25F, FontStyle.Regular, GraphicsUnit.Point);
+        
 
         public GameForm()
         {
@@ -37,11 +38,6 @@ namespace NuggetBlaster
             GameTimer.Start();
 
             ResizeUI();
-        }
-
-        public Rectangle GetGameAreaAsRectangle()
-        {
-             return new Rectangle(0, 0, ClientSize.Width, ClientSize.Height);
         }
 
         private void GameKeyDown(object sender, KeyEventArgs e)
@@ -71,7 +67,7 @@ namespace NuggetBlaster
             BackgroundRect.X -= (int)(Engine.GetPPF(BackgroundRect.Width / 20) * GameEngine.TicksToProcess);
             e.Graphics.DrawImage(Background, BackgroundRect);
 
-            string analytics = Analytics ? " ticks: " + GameEngine.TickCount.ToString() + " drawMs: " + msDraw + " processMs: " + msProcessing : "";
+            string analytics = Analytics ? " ticks: " + GameEngine.TicksCurrent.ToString() + " drawMs: " + msDraw + " processMs: " + msProcessing : "";
             e.Graphics.DrawString("Score: " + GameEngine.Score + analytics, ScoreLabelFont, new SolidBrush(Color.White), CanvasEdgePadding, CanvasEdgePadding, new StringFormat());
 
             if (GameEngine.IsRunning)
@@ -120,6 +116,7 @@ namespace NuggetBlaster
             GameCanvas.Height = ClientSize.Height;
             GameCanvas.Width  = ClientSize.Width;
 
+            ScoreLabelFont = new Font("Arial Narrow", GameCanvas.Height/15, FontStyle.Regular, GraphicsUnit.Pixel);
             BackgroundRect = new Rectangle((int)(BackgroundRect.X*scaling), 0, GameCanvas.Width * 2, GameCanvas.Height);
             KeysRect       = new Rectangle((int)(GameCanvas.Width - (GameCanvas.Width * 0.2)) - CanvasEdgePadding, (int)(GameCanvas.Height - (GameCanvas.Height * 0.1)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.2), (int)(GameCanvas.Height * 0.1));
             TitleRect      = new Rectangle((int)(GameCanvas.Width / 2 - GameCanvas.Width * 0.8 / 2), (int)(GameCanvas.Height / 2 - GameCanvas.Height * 0.2 / 2), (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.2));
@@ -137,6 +134,11 @@ namespace NuggetBlaster
         public static Rectangle ResizeRectangle(Rectangle rectangle, double scaling)
         {
             return new Rectangle((int)(rectangle.X*scaling), (int)(rectangle.Y*scaling), (int)(rectangle.Width*scaling), (int)(rectangle.Height*scaling));
+        }
+
+        public Rectangle GetGameAreaAsRectangle()
+        {
+            return new Rectangle(0, 0, ClientSize.Width, ClientSize.Height);
         }
     }
 }
