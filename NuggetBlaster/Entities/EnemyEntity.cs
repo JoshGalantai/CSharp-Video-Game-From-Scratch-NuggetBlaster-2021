@@ -1,5 +1,6 @@
 ﻿using NuggetBlaster.Properties;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace NuggetBlaster.Entities
@@ -11,21 +12,28 @@ namespace NuggetBlaster.Entities
             MoveLeft           = true;
             Team               = 2;
             PointsOnKill       = 100;
-            ShootCooldownMS    = 2500;
-            ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS/5;
+            ShootCooldownMS    = 2000;
+            ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS / 10; // Delay before first shot after spawn
+            Damage             = 1;
         }
 
-        public override ProjectileEntity Shoot()
+        public override List<ProjectileEntity> Shoot()
         {
-            ShootCooldown();
-            Point location = new(SpriteRectangle.Left - 20, SpriteRectangle.Top + (SpriteRectangle.Height/2) - (ProjectileHeight/2));
-            return new ProjectileEntity(GameRectangle, new Rectangle(location, new Size(ProjectileWidth, ProjectileHeight)), Resources.enemyProjectile)
+            List<ProjectileEntity> projList = new();
+            if (CheckCanShoot())
             {
-                MoveLeft   = true,
-                BaseSpeed  = BaseSpeed,
-                SpeedMulti = 1.4,
-                Team       = Team
-            };
+                ShootCooldown();
+                Point location = new(SpriteRectangle.Left - 20, SpriteRectangle.Top + (SpriteRectangle.Height / 2) - (ProjectileHeight / 2));
+                projList.Add(new ProjectileEntity(GameRectangle, new Rectangle(location, new Size(ProjectileWidth, ProjectileHeight)), Resources.enemyProjectile)
+                {
+                    MoveLeft = true,
+                    BaseSpeed = BaseSpeed,
+                    SpeedMulti = 1.4,
+                    Team = Team,
+                    Damage = Damage
+                });
+            }
+            return projList;
         }
     }
 }

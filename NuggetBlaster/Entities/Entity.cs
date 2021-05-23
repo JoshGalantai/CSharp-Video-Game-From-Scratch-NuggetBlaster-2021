@@ -1,5 +1,6 @@
 ﻿using NuggetBlaster.Properties;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace NuggetBlaster.Entities
@@ -18,6 +19,7 @@ namespace NuggetBlaster.Entities
         public virtual int ProjectileWidth { get; set; } = 0;
         public virtual int ProjectileHeight { get; set; } = 0;
         public virtual bool Damageable { get; set; } = true;
+        public virtual int Damage { get; set; } = 0;
         public virtual int HitPoints { get; set; } = 1;
         public virtual long ShootCooldownTimer { get; set; } = 0;
         public virtual int ShootCooldownMS { get; set; } = 1500;
@@ -38,7 +40,10 @@ namespace NuggetBlaster.Entities
             ProjectileWidth  = (int)(GameRectangle.Width * 0.03125);
         }
 
-        public abstract ProjectileEntity Shoot();
+        public virtual List<ProjectileEntity> Shoot()
+        {
+            return new List<ProjectileEntity>();
+        }
 
         public void ShootCooldown()
         {
@@ -48,6 +53,12 @@ namespace NuggetBlaster.Entities
         public virtual bool CheckCanShoot()
         {
             return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer;
+        }
+
+        public virtual void TakeDamage(int Damage)
+        {
+            if (Damageable)
+                HitPoints -= Damage;
         }
 
         public void CalculateMovement(int ticks)

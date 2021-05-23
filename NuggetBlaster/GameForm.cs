@@ -18,6 +18,9 @@ namespace NuggetBlaster
         private Image     Title       = Resources.nuggetBlasterTitle;
         private Rectangle TitleRect;
         private Font      ScoreLabelFont = new("Arial Narrow", 1, FontStyle.Regular, GraphicsUnit.Pixel);
+        private Image     Heart       = Resources.heart;
+        private Image     EmptyHeart  = Resources.emptyHeart;
+        private Rectangle HeartRect;
 
         private readonly bool Analytics    = false;
         private          long msDraw       = 0;
@@ -72,6 +75,13 @@ namespace NuggetBlaster
 
             if (GameEngine.IsRunning)
             {
+                for (int i = 1; i <= Engine.MaxPlayerHP; i++)
+                {
+                    Point heartLocation = HeartRect.Location;
+                    heartLocation.X += HeartRect.Width * (i-1);
+                    e.Graphics.DrawImage(i > GameEngine.GetPlayerHP() ? EmptyHeart : Heart, new Rectangle(heartLocation, HeartRect.Size));
+                }
+
                 double UIScaling = (double)GameCanvas.Width / GameEngine.GameArea.Width;
                 IDictionary<string, Image> resizedSprites  = GameEngine.GetEntitySpriteList();
                 IDictionary<string, Image> originalSprites = GameEngine.GetEntitySpriteList(true);
@@ -103,8 +113,12 @@ namespace NuggetBlaster
         private void GameForm_Resize(object sender, EventArgs e)
         {
             if (ClientSize.Height != 0 && ClientSize.Width != 0 && (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width))
+            {
                 if (Size.Width != Size.Height * AspectRatio)
                     Size = new Size(Size.Width, (int)(Size.Width / AspectRatio));
+                ResizeUI();
+            }
+                
         }
 
         private void ResizeUI()
@@ -120,10 +134,13 @@ namespace NuggetBlaster
             BackgroundRect = new Rectangle((int)(BackgroundRect.X*scaling), 0, GameCanvas.Width * 2, GameCanvas.Height);
             KeysRect       = new Rectangle((int)(GameCanvas.Width - (GameCanvas.Width * 0.2)) - CanvasEdgePadding, (int)(GameCanvas.Height - (GameCanvas.Height * 0.1)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.2), (int)(GameCanvas.Height * 0.1));
             TitleRect      = new Rectangle((int)(GameCanvas.Width / 2 - GameCanvas.Width * 0.8 / 2), (int)(GameCanvas.Height / 2 - GameCanvas.Height * 0.2 / 2), (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.2));
+            HeartRect      = new Rectangle(CanvasEdgePadding, GameCanvas.Height/15+CanvasEdgePadding*2, (int)(GameCanvas.Width*0.053), (int)(GameCanvas.Width * 0.036));
 
             Background = ResizeImage(Resources.background, BackgroundRect);
             Keys       = ResizeImage(Resources.keysWhite, KeysRect);
             Title      = ResizeImage(Resources.nuggetBlasterTitle, TitleRect);
+            Heart      = ResizeImage(Resources.heart, HeartRect);
+            EmptyHeart = ResizeImage(Resources.emptyHeart, HeartRect);
         }
 
         public static Image ResizeImage(Image image, Rectangle rect)

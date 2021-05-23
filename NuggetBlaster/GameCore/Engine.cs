@@ -12,40 +12,43 @@ namespace NuggetBlaster.GameCore
 {
     class Engine
     {
+        public           Rectangle   GameArea;
+        private readonly GameForm    GameUI;
+        private          SoundPlayer MusicPlayer;
+        private readonly Random      Random = new();
+        private readonly IDictionary<string, Entity> EntityDataList   = new Dictionary<string, Entity>();
+        private readonly IDictionary<string, string> SoundEffectsList = new Dictionary<string, string>();
+
+        // Engine settings
         public const int  Fps                   = 60;
         public const int  MaxMSCatchUpPerTick   = 40;
         public const int  MaxMSFallBehindCutoff = 1000;
-        public       long MSStartTime;
+        private       long MSStartTime;
         public       int  TicksCurrent;
         public       int  TicksTotal;
         public       int  TicksToProcess;
+        public       bool IsRunning;
 
-        public int Stage2StartMS = 60000;
-        public int Stage3StartMS = 120000;
-
-        private SoundPlayer MusicPlayer;
-
-        private readonly Random Random = new();
-
-        private int EntityIterator = 0;
-        private int EnemyCount     = 0;
-        private int MaxEnemies     = 6;
-        private int GameStage      = 2;
-
-        private long EnemySpawnCooldownTimer = 0;
-        private int  EnemySpawnCooldownMS    = 300;
-
-        private readonly GameForm  GameUI;
-        public           Rectangle GameArea;
-
-        public readonly IDictionary<string, Entity> EntityDataList   = new Dictionary<string, Entity>();
-        public readonly IDictionary<string, string> SoundEffectsList = new Dictionary<string, string>();
-
-        public int  Score     = 0;
-        public bool IsRunning = false;
+        // Game settings
+        public const int  MaxPlayerHP              = 5;
+        public const int  Stage2StartMS            = 60000;
+        public const int  Stage3StartMS            = 120000;
+        public const int  Stage4StartMS            = 180000;
+        public       int  Score;
+        private      int  MaxEnemies;
+        private      long EnemySpawnCooldownTimer  = 0;
+        private      int  EnemySpawnCooldownMS     = 300;
+        private      int  PowerUpSpawnInterval     = 3500;
+        private      int  HeartPointsSpawnInterval = 5000;
+        private      int  NextHeartSpawnPoints;
+        private      int  NextPowerUpSpawnPoints;
+        private      int  EntityIterator;
+        private      int  EnemyCount;
+        private      int  GameStage;
 
         public Engine(GameForm gameUI) {
-            GameUI   = gameUI;
+            GameUI    = gameUI;
+            IsRunning = false;
 
             MusicPlayer = new(Resources.title);
             MusicPlayer.PlayLooping();
@@ -61,11 +64,17 @@ namespace NuggetBlaster.GameCore
 
         public void StartGame()
         {
-            GameArea = GameUI.GetGameAreaAsRectangle();
-            IsRunning = true;
-            Score = 0;
-            GameStage = 1;
-            TicksTotal = 0;
+            GameArea     = GameUI.GetGameAreaAsRectangle();
+            IsRunning    = true;
+            Score        = 0;
+            GameStage    = 1;
+            TicksTotal   = 0;
+            MSStartTime  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            TicksCurrent = 0;
+
+            NextHeartSpawnPoints   = HeartPointsSpawnInterval;
+            NextPowerUpSpawnPoints = PowerUpSpawnInterval;
+
             ClearEntities();
 
             MusicPlayer = new(Resources.stageOne);
@@ -73,11 +82,7 @@ namespace NuggetBlaster.GameCore
 
             if (!EntityDataList.ContainsKey("player"))
                 EntityDataList["player"] = new PlayerEntity(GameArea);
-
-            EntityDataList["player"].HitPoints = 100;
-
-            MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            TicksCurrent   = 0;
+            EntityDataList["player"].HitPoints = MaxPlayerHP;
         }
 
         public void GameOver()
@@ -92,11 +97,11 @@ namespace NuggetBlaster.GameCore
         public void ProcessGameTick()
         {
             CalculateTicksToProcess();
-
+            
             if (IsRunning)
             {
-                ProcessGameStage();
                 CheckGameState();
+                ProcessGameStage();
                 ProcessEntityMovement();
                 ProcessEntityCollissions();
                 ProcessEntityCreation();
@@ -114,16 +119,33 @@ namespace NuggetBlaster.GameCore
         public void ProcessGameStage()
         {
             double msPerTick = 1000.0 / Fps;
-            if (TicksTotal * msPerTick > Stage3StartMS && GameStage == 2)
+            if (TicksTotal * msPerTick < Stage2StartMS)
+            {
+                GameStage = 1;
+                MaxEnemies = 5;
+            }
+            else if (TicksTotal * msPerTick > Stage2StartMS && GameStage == 1)
+            {
+                GameStage = 2;
+                MaxEnemies = 6;
+                MusicPlayer = new(Resources.stageTwo);
+                MusicPlayer.PlayLooping();
+
+            }
+            else if (TicksTotal * msPerTick > Stage3StartMS && GameStage == 2)
             {
                 GameStage = 3;
                 MusicPlayer = new(Resources.StageThree);
                 MusicPlayer.PlayLooping();
             }
-            else if (TicksTotal * msPerTick > Stage2StartMS && GameStage == 1)
+            else if (TicksTotal * msPerTick > Stage4StartMS && GameStage == 3)
             {
-                GameStage = 2;
-                MusicPlayer = new(Resources.stageTwo);
+                GameStage = 4;
+                foreach (string key in EntityDataList.Keys.ToArray())
+                    if (EntityDataList[key].GetType() == typeof(EnemyEntity))
+                        DeleteEntity(key);
+                MaxEnemies = 0;
+                MusicPlayer = new(Resources.bossStage);
                 MusicPlayer.PlayLooping();
             }
         }
@@ -144,6 +166,18 @@ namespace NuggetBlaster.GameCore
             {
                 EnemyEntity enemy = GetEnemyEntity();
                 AddEntity(enemy, "enemy-");
+            }
+            if (Score > NextHeartSpawnPoints)
+            {
+                BuffEntity buff = new(GameArea, Random);
+                NextHeartSpawnPoints += HeartPointsSpawnInterval;
+                AddEntity(buff, "buff-");
+            }
+            if (Score > NextPowerUpSpawnPoints)
+            {
+                BuffShootEntity buff = new(GameArea, Random);
+                NextPowerUpSpawnPoints += PowerUpSpawnInterval;
+                AddEntity(buff, "buff-");
             }
         }
  
@@ -167,8 +201,9 @@ namespace NuggetBlaster.GameCore
             string[] entityKeys = EntityDataList.Keys.ToArray();
             foreach (string key in entityKeys)
             {
-                if (EntityDataList[key].CheckCanShoot())
-                    AddEntity(EntityDataList[key].Shoot(), "proj-");
+                foreach (ProjectileEntity entity in EntityDataList[key].Shoot()) {
+                    AddEntity(entity, "proj-");
+                }
             }
             if (EntityDataList.Count > entityKeys.Length)
                 PlaySoundAsync(SoundEffectsList["shoot"]);
@@ -179,36 +214,29 @@ namespace NuggetBlaster.GameCore
             if (!IsRunning)
                 return;
             string[] entityKeys = EntityDataList.Keys.ToArray();
-            foreach (string nonProjKey in entityKeys)
+            foreach (string targetKey in entityKeys)
             {
-                if (!EntityDataList.ContainsKey(nonProjKey)||EntityDataList[nonProjKey].GetType() == typeof(ProjectileEntity))
+                if (!EntityDataList.ContainsKey(targetKey) || EntityDataList[targetKey].GetType() == typeof(ProjectileEntity))
                     continue;
                 foreach (string comparisonKey in entityKeys)
                 {
-                    if (comparisonKey == nonProjKey || !EntityDataList.ContainsKey(comparisonKey) || !EntityDataList.ContainsKey(nonProjKey))
+                    if (comparisonKey == targetKey || !EntityDataList.ContainsKey(comparisonKey) || !EntityDataList.ContainsKey(targetKey))
                         continue;
-                    if (EntityDataList[comparisonKey].GetType() == typeof(ProjectileEntity) && EntityDataList[comparisonKey].Team != EntityDataList[nonProjKey].Team)
+                    if (RectangleOverlaps(EntityDataList[targetKey].SpriteRectangle, EntityDataList[comparisonKey].SpriteRectangle))
                     {
-                        if (RectangleOverlaps(EntityDataList[nonProjKey].SpriteRectangle, EntityDataList[comparisonKey].SpriteRectangle))
+                        if (EntityDataList[comparisonKey].Team != EntityDataList[targetKey].Team)
                         {
-                            DeleteEntity(comparisonKey, true);
+                            EntityDataList[targetKey].TakeDamage(EntityDataList[comparisonKey].Damage);
+                            EntityDataList[comparisonKey].TakeDamage(EntityDataList[targetKey].Damage);
 
-                            EntityDataList[nonProjKey].HitPoints--;
-                            if (EntityDataList[nonProjKey].HitPoints < 1)
-                                DeleteEntity(nonProjKey, true);
-                        }
-                    }
-                    else if (EntityDataList[comparisonKey].GetType() != typeof(ProjectileEntity) && EntityDataList[comparisonKey].Team != EntityDataList[nonProjKey].Team)
-                    {
-                        if (RectangleOverlaps(EntityDataList[nonProjKey].SpriteRectangle, EntityDataList[comparisonKey].SpriteRectangle))
-                        {
-                            EntityDataList[nonProjKey].HitPoints--;
-                            if (EntityDataList[nonProjKey].HitPoints < 1)
-                                DeleteEntity(nonProjKey, true);
-
-                            EntityDataList[comparisonKey].HitPoints--;
+                            if (EntityDataList[targetKey].HitPoints < 1)
+                                DeleteEntity(targetKey, true);
                             if (EntityDataList[comparisonKey].HitPoints < 1)
                                 DeleteEntity(comparisonKey, true);
+                        } else if (EntityDataList[targetKey].GetType() == typeof(PlayerEntity) && (EntityDataList[comparisonKey].GetType().IsSubclassOf(typeof(BuffEntity)) || EntityDataList[comparisonKey].GetType() == typeof(BuffEntity)))
+                        {
+                            EntityDataList[targetKey] = (EntityDataList[comparisonKey] as BuffEntity).AddBuff(EntityDataList[targetKey] as PlayerEntity);
+                            DeleteEntity(comparisonKey, true);
                         }
                     }
                 }
@@ -243,9 +271,11 @@ namespace NuggetBlaster.GameCore
 
         public void DeleteEntity(string id, bool addPoints = false)
         {
-            if (EntityDataList.ContainsKey(id) && EntityDataList[id].GetType() == typeof(PlayerEntity))
+            if (!EntityDataList.ContainsKey(id))
+                return;
+            if (EntityDataList[id].GetType() == typeof(PlayerEntity))
                 IsRunning = false;
-            if (EntityDataList.ContainsKey(id) && EntityDataList[id].GetType() == typeof(EnemyEntity))
+            if (EntityDataList[id].GetType() == typeof(EnemyEntity))
                 EnemyCount--;
             if (addPoints)
                 Score += EntityDataList[id].PointsOnKill;
@@ -404,6 +434,11 @@ namespace NuggetBlaster.GameCore
                 file.CopyTo(fileStream);
             }
             return fullPath;
+        }
+
+        public int GetPlayerHP()
+        {
+            return (EntityDataList.ContainsKey("player")) ? EntityDataList["player"].HitPoints : 0;
         }
 
        /***********************************************************************
