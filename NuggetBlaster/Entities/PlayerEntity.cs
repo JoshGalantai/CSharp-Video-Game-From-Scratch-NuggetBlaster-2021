@@ -27,7 +27,9 @@ namespace NuggetBlaster.Entities
                 return;
 
             HitPoints -= Damage;
-            ShootBuffLevel = 0;
+            if (ShootBuffLevel > 0)
+                ShootBuffLevel--;
+
             DamageableCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + DamageableCooldownMS;
         }
 
@@ -57,24 +59,24 @@ namespace NuggetBlaster.Entities
 
                 if (ShootBuffLevel >= 1)
                 {
-                    ProjectileEntity projectileTwo = (ProjectileEntity)projectile.Clone();
-                    projectileTwo.SpriteRectangle  = new Rectangle(new Point(projectile.SpriteRectangle.X, projectile.SpriteRectangle.Y - ProjectileHeight), projectile.SpriteRectangle.Size);
-                    projList.Add(projectileTwo);
+                    ProjectileEntity proj = (ProjectileEntity)projectile.Clone();
+                    proj.SpriteRectangle  = new Rectangle(new Point(projectile.SpriteRectangle.X, projectile.SpriteRectangle.Y - ProjectileHeight), projectile.SpriteRectangle.Size);
+                    projList.Add(proj);
                 }
                 if (ShootBuffLevel >= 2)
                 {
-                    ProjectileEntity projectileThree = (ProjectileEntity)projectile.Clone();
-                    projectileThree.SpriteRectangle = new Rectangle(new Point(projectile.SpriteRectangle.X, projectile.SpriteRectangle.Y + ProjectileHeight), projectile.SpriteRectangle.Size);
-                    projList.Add(projectileThree);
+                    ProjectileEntity proj = (ProjectileEntity)projectile.Clone();
+                    proj.SpriteRectangle = new Rectangle(new Point(projectile.SpriteRectangle.X, projectile.SpriteRectangle.Y + ProjectileHeight), projectile.SpriteRectangle.Size);
+                    projList.Add(proj);
                 }
                 if (ShootBuffLevel >= 3)
                 {
-                    ProjectileEntity projectileFour = (ProjectileEntity)projectile.Clone();
-                    projectileFour.MoveUp = true;
-                    projList.Add(projectileFour);
-                    ProjectileEntity projectileFive = (ProjectileEntity)projectile.Clone();
-                    projectileFive.MoveDown = true;
-                    projList.Add(projectileFive);
+                    ProjectileEntity proj = (ProjectileEntity)projectile.Clone();
+                    proj.MoveUp = true;
+                    projList.Add(proj);
+                    proj = (ProjectileEntity)projectile.Clone();
+                    proj.MoveDown = true;
+                    projList.Add(proj);
                 }
             }
             return projList;

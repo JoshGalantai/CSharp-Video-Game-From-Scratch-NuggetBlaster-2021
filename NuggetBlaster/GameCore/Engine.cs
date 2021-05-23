@@ -319,9 +319,11 @@ namespace NuggetBlaster.GameCore
                 return GetEnemyEntity();
             EnemyEntity entity  = new(GameArea, new Rectangle(GameArea.Width, Random.Next(10, GameArea.Height - (int)(GameArea.Width * 0.1)), (int)(GameArea.Width * 0.1), (int)(GameArea.Width * 0.1)), Resources.coolestPickle);
             entity.CanShoot     = true;
-            entity.BaseSpeed    = Random.Next(400, 600) / 1000.0;
+            entity.BaseSpeed    = Random.Next(200, 300) / 1000.0;
             entity.HitPoints    = 4;
-            entity.PointsOnKill = 900;
+            entity.PointsOnKill = 600;
+            entity.MoveUp       = Random.Next(0, 1) == 1;
+            entity.MoveDown     = ! entity.MoveUp;
             return entity;
         }
 
