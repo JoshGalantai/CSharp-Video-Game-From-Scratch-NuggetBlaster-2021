@@ -11,24 +11,30 @@ namespace NuggetBlaster
     {
         private readonly Engine GameEngine;
 
-        private Image     Background  = Resources.background;
+        // Display settings
+        private const double AspectRatio       = (double)16 / 9;
+        private const int    CanvasEdgePadding = 10;
+
+        // Display items
+        private Font      HeaderFont = new("Arial Narrow", 1, FontStyle.Regular, GraphicsUnit.Pixel);
+        private Image     Background = Resources.background;
+        private Image     Keys       = Resources.keysWhite;
+        private Image     Title      = Resources.nuggetBlasterTitle;
+        private Image     Heart      = Resources.heart;
+        private Image     EmptyHeart = Resources.emptyHeart;
         private Rectangle BackgroundRect;
-        private Image     Keys        = Resources.keysWhite;
         private Rectangle KeysRect;
-        private Image     Title       = Resources.nuggetBlasterTitle;
         private Rectangle TitleRect;
-        private Font      ScoreLabelFont = new("Arial Narrow", 1, FontStyle.Regular, GraphicsUnit.Pixel);
-        private Image     Heart       = Resources.heart;
-        private Image     EmptyHeart  = Resources.emptyHeart;
         private Rectangle HeartRect;
         private Rectangle BossHPRect;
 
-        private readonly bool Analytics    = false;
-        private          long msDraw       = 0;
-        private          long msProcessing = 0;
+        // Game vars
+        public bool PlayerIsTranslucent = false; // After taking damage player becomes translucent for a short period
 
-        private readonly double AspectRatio       = (double)16/9;
-        private readonly int    CanvasEdgePadding = 10;       
+        // Analytics
+        private const bool Analytics    = false;
+        private       long msDraw       = 0;
+        private       long msProcessing = 0;     
 
         public GameForm()
         {
@@ -69,11 +75,9 @@ namespace NuggetBlaster
             BackgroundRect.X -= (int)(Engine.GetPPF(BackgroundRect.Width / 20) * GameEngine.TicksToProcess);
             e.Graphics.DrawImage(Background, BackgroundRect);
 
-            string analytics = Analytics ? " ticks: " + GameEngine.TicksCurrent.ToString() + " drawMs: " + msDraw + " processMs: " + msProcessing : "";
-            e.Graphics.DrawString("Score: " + GameEngine.Score + analytics, ScoreLabelFont, new SolidBrush(Color.White), CanvasEdgePadding, CanvasEdgePadding, new StringFormat());
-
             if (GameEngine.IsRunning)
             {
+                // Draw player health meter
                 for (int i = 1; i <= Engine.MaxPlayerHP; i++)
                 {
                     Point heartLocation = HeartRect.Location;
@@ -81,6 +85,7 @@ namespace NuggetBlaster
                     e.Graphics.DrawImage(i > GameEngine.GetPlayerHP() ? EmptyHeart : Heart, new Rectangle(heartLocation, HeartRect.Size));
                 }
 
+                // Draw main boss HP bar at bottom of screen
                 int bossHealthPercent = GameEngine.GetBossHealthPercent();
                 if (bossHealthPercent > 0)
                 {
@@ -94,10 +99,15 @@ namespace NuggetBlaster
                 Rectangle resizedRectangle;
                 foreach (KeyValuePair<string, Rectangle> rectangle in GameEngine.GetEntityRectangleList()) {
                     resizedRectangle = ResizeRectangle(rectangle.Value, UIScaling);
-                    if (resizedRectangle.Width != resizedSprites[rectangle.Key].Width)
+                    if (resizedRectangle.Width != resizedSprites[rectangle.Key].Width || PlayerIsTranslucent != GameEngine.GetPlayerIsInvulnerable())
                     {
                         resizedSprites[rectangle.Key] = ResizeImage(originalSprites[rectangle.Key], resizedRectangle);
+
+                        // Make player appear "ghostly" if they are currently in invincibility frames
+                        if (GameEngine.GetPlayerIsInvulnerable())
+                            resizedSprites[rectangle.Key] = ToolStripRenderer.CreateDisabledImage(resizedSprites[rectangle.Key]);
                         GameEngine.CacheResizedEntitySprite(resizedSprites[rectangle.Key], rectangle.Key);
+                        PlayerIsTranslucent = GameEngine.GetPlayerIsInvulnerable();
                     }
                     e.Graphics.DrawImage(resizedSprites[rectangle.Key], resizedRectangle);
                     if (rectangle.Key == "boss")
@@ -116,6 +126,10 @@ namespace NuggetBlaster
             {
                 e.Graphics.DrawImage(Title, TitleRect);
             }
+
+            string analytics = Analytics ? " ticks: " + GameEngine.TicksCurrent.ToString() + " drawMs: " + msDraw + " processMs: " + msProcessing : "";
+            e.Graphics.DrawString("Score: " + GameEngine.Score + analytics, HeaderFont, new SolidBrush(Color.White), CanvasEdgePadding, CanvasEdgePadding, new StringFormat());
+
             e.Graphics.DrawImage(Keys, KeysRect);
             msDraw += DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - timestamp;
         }
@@ -146,7 +160,7 @@ namespace NuggetBlaster
             GameCanvas.Height = ClientSize.Height;
             GameCanvas.Width  = ClientSize.Width;
 
-            ScoreLabelFont = new Font("Arial Narrow", GameCanvas.Height/15, FontStyle.Regular, GraphicsUnit.Pixel);
+            HeaderFont = new Font("Arial Narrow", GameCanvas.Height/15, FontStyle.Regular, GraphicsUnit.Pixel);
             BackgroundRect = new Rectangle((int)(BackgroundRect.X*scaling), 0, GameCanvas.Width * 2, GameCanvas.Height);
             KeysRect       = new Rectangle((int)(GameCanvas.Width - (GameCanvas.Width * 0.2)) - CanvasEdgePadding, (int)(GameCanvas.Height - (GameCanvas.Height * 0.1)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.2), (int)(GameCanvas.Height * 0.1));
             TitleRect      = new Rectangle((int)(GameCanvas.Width / 2 - GameCanvas.Width * 0.8 / 2), (int)(GameCanvas.Height / 2 - GameCanvas.Height * 0.2 / 2), (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.2));

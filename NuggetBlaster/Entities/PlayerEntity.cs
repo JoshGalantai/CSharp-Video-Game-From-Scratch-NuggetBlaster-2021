@@ -7,10 +7,11 @@ namespace NuggetBlaster.Entities
 {
     public class PlayerEntity : Entity
     {
-        public const int MaxShootBuffLevel                     = 4;
-        public long      DamageableCooldownTimer { get; set; } = 0;
-        public int       DamageableCooldownMS    { get; set; } = 1000;
-        public int       ShootBuffLevel          { get; set; } = 0;
+        public const int  MaxShootBuffLevel                     = 4; // Highest buff level allowed
+        public       int  ShootBuffLevel          { get; set; } = 0; // Each buff level enhances players shooting
+        public       long DamageableCooldownTimer { get; set; } = 0;
+        private      int  DamageableCooldownMS    { get; set; } = 1000; // After getting hit player is invulnerable for a brief period
+
 
         public PlayerEntity(Rectangle gameCanvas) : base(gameCanvas, new Rectangle(0, gameCanvas.Height/2, (int)(gameCanvas.Width*0.1), (int)(gameCanvas.Width*0.05)), Resources.nugget) {
             BaseSpeed       = 0.2;

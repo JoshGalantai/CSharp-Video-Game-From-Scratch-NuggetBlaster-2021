@@ -78,7 +78,7 @@ namespace NuggetBlaster.GameCore
             IsRunning   = true;
             MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-            SpawnBoss = false;
+            SpawnBoss = GameUI.PlayerIsTranslucent = false;
             Score     = GameStage = TicksTotal = TicksCurrent = 0;
 
             NextHeartSpawnPoints   = HeartPointsSpawnInterval;
@@ -307,7 +307,7 @@ namespace NuggetBlaster.GameCore
                 }
             }
         }
-
+ 
         public void DeleteEntity(string id, bool addPoints = false)
         {
             if (!EntityDataList.ContainsKey(id))
@@ -491,6 +491,13 @@ namespace NuggetBlaster.GameCore
         public int GetPlayerHP()
         {
             return (EntityDataList.ContainsKey("player")) ? EntityDataList["player"].HitPoints : 0;
+        }
+
+        public bool GetPlayerIsInvulnerable()
+        {
+            if (!EntityDataList.ContainsKey("player"))
+                return false;
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < (EntityDataList["player"] as PlayerEntity).DamageableCooldownTimer;
         }
 
         public int GetBossHealthPercent()

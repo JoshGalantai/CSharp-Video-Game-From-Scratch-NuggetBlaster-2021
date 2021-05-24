@@ -7,28 +7,27 @@ namespace NuggetBlaster.Entities
 {
     public abstract class Entity
     {
-        public virtual double BaseSpeed { get; set; } = 0.2;
-        public virtual double SpeedMulti { get; set; } = 1.0;
-        public virtual bool MoveRight { get; set; } = false;
-        public virtual bool MoveLeft { get; set; } = false;
-        public virtual bool MoveUp { get; set; } = false;
-        public virtual bool MoveDown { get; set; } = false;
-        public virtual bool Spacebar { get; set; } = false;
-        public virtual int Team { get; set; } = 0;
-        public virtual bool CanShoot { get; set; } = false;
-        public virtual int ProjectileWidth { get; set; } = 0;
-        public virtual int ProjectileHeight { get; set; } = 0;
-        public virtual bool Damageable { get; set; } = true;
-        public virtual int Damage { get; set; } = 1;
-        public virtual int HitPoints { get; set; } = 1;
-        public virtual long ShootCooldownTimer { get; set; } = 0;
-        public virtual int ShootCooldownMS { get; set; } = 1500;
-        public virtual int PointsOnKill { get; set; } = 0;
-        public virtual Image SpriteOriginal { get; set; } = Resources.pickle;
-        public virtual Image SpriteCached { get; set; } = Resources.pickle;
-        public virtual Rectangle SpriteRectangle { get; set; } = new Rectangle(0, 0, 0, 0);
-        public virtual Rectangle GameRectangle { get; set; } = new Rectangle(0, 0, 0, 0);
-
+        public virtual double    BaseSpeed          { get; set; } = 0.2;
+        public virtual double    SpeedMulti         { get; set; } = 1.0;
+        public virtual bool      MoveRight          { get; set; } = false;
+        public virtual bool      MoveLeft           { get; set; } = false;
+        public virtual bool      MoveUp             { get; set; } = false;
+        public virtual bool      MoveDown           { get; set; } = false;
+        public virtual bool      Spacebar           { get; set; } = false;
+        public virtual int       Team               { get; set; } = 0;
+        public virtual bool      CanShoot           { get; set; } = false;
+        public virtual int       ProjectileWidth    { get; set; } = 0;
+        public virtual int       ProjectileHeight   { get; set; } = 0;
+        public virtual bool      Damageable         { get; set; } = true;
+        public virtual int       Damage             { get; set; } = 1;
+        public virtual int       HitPoints          { get; set; } = 1;
+        public virtual long      ShootCooldownTimer { get; set; } = 0;
+        public virtual int       ShootCooldownMS    { get; set; } = 1500;
+        public virtual int       PointsOnKill       { get; set; } = 0;
+        public virtual Image     SpriteOriginal     { get; set; } = Resources.pickle;
+        public virtual Image     SpriteCached       { get; set; } = Resources.pickle;
+        public virtual Rectangle SpriteRectangle    { get; set; } = new Rectangle(0, 0, 0, 0);
+        public virtual Rectangle GameRectangle      { get; set; } = new Rectangle(0, 0, 0, 0);
 
         public Entity(Rectangle gameRectangle, Rectangle spriteRectangle, Image sprite = null)
         {

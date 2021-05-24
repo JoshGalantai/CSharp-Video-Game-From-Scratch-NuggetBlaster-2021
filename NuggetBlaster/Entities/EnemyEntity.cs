@@ -7,9 +7,9 @@ namespace NuggetBlaster.Entities
 {
     class EnemyEntity : Entity
     {
-        public bool IsDamagedOnTouch    { get; set; } = true; // If true entity only takes damage from projectiles
-        public bool AllowHorizontalExit { get; set; } = true; // If true entity exits left or right instead of "bouncing" off
-        public bool TripleShot          { get; set; } = false; // If true entity has alternate fire pattern (3 shots)
+        protected bool IsDamagedOnTouch    { get; set; } = true; // Entity only takes damage from projectiles
+        protected bool AllowHorizontalExit { get; set; } = true; // Entity exits left or right instead of "bouncing" off
+        protected bool TripleShot          { get; set; } = false; // Entity has alternate fire pattern (3 shots)
 
         public EnemyEntity(Rectangle gameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(gameCanvas, spriteRectangle, sprite)
         {
@@ -17,7 +17,7 @@ namespace NuggetBlaster.Entities
             Team               = 2;
             PointsOnKill       = 100;
             ShootCooldownMS    = 2000;
-            ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS / 10; // Delay before first shot after spawn
+            ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS / 10; // Slight delay before first shot after spawn
         }
 
         public override List<ProjectileEntity> Shoot()

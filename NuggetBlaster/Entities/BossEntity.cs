@@ -1,6 +1,4 @@
 ﻿using NuggetBlaster.Properties;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 namespace NuggetBlaster.Entities
