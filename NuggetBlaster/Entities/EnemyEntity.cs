@@ -7,7 +7,9 @@ namespace NuggetBlaster.Entities
 {
     class EnemyEntity : Entity
     {
-        public bool AllowHorizontalExit { get; set; } = true;
+        public bool IsDamagedOnTouch    { get; set; } = true; // If true entity only takes damage from projectiles
+        public bool AllowHorizontalExit { get; set; } = true; // If true entity exits left or right instead of "bouncing" off
+        public bool TripleShot          { get; set; } = false; // If true entity has alternate fire pattern (3 shots)
 
         public EnemyEntity(Rectangle gameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(gameCanvas, spriteRectangle, sprite)
         {
@@ -16,7 +18,6 @@ namespace NuggetBlaster.Entities
             PointsOnKill       = 100;
             ShootCooldownMS    = 2000;
             ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS / 10; // Delay before first shot after spawn
-            Damage             = 1;
         }
 
         public override List<ProjectileEntity> Shoot()
@@ -26,16 +27,34 @@ namespace NuggetBlaster.Entities
             {
                 ShootCooldown();
                 Point location = new(SpriteRectangle.Left - 20, SpriteRectangle.Top + (SpriteRectangle.Height / 2) - (ProjectileHeight / 2));
-                projList.Add(new ProjectileEntity(GameRectangle, new Rectangle(location, new Size(ProjectileWidth, ProjectileHeight)), Resources.enemyProjectile)
+                ProjectileEntity projectile = new(GameRectangle, new Rectangle(location, new Size(ProjectileWidth, ProjectileHeight)), Resources.enemyProjectile)
                 {
-                    MoveLeft = true,
-                    BaseSpeed = BaseSpeed,
-                    SpeedMulti = 1.4,
-                    Team = Team,
-                    Damage = Damage
-                });
+                    MoveLeft   = true,
+                    BaseSpeed  = BaseSpeed * SpeedMulti,
+                    SpeedMulti = 1.3,
+                    Team       = Team,
+                    Damage     = Damage
+                };
+                projList.Add(projectile);
+                if (TripleShot)
+                {
+                    ProjectileEntity proj = (ProjectileEntity)projectile.Clone();
+                    proj.MoveUp     = true;
+                    proj.SpeedMulti = 1.1;
+                    projList.Add(proj);
+                    proj = (ProjectileEntity)projectile.Clone();
+                    proj.MoveDown   = true;
+                    proj.SpeedMulti = 1.1;
+                    projList.Add(proj);
+                }
             }
             return projList;
+        }
+
+        public override void TakeDamage(Entity entity)
+        {
+            if (Damageable && (IsDamagedOnTouch || entity.GetType() == typeof(ProjectileEntity)))
+                HitPoints -= entity.Damage;
         }
 
         public override void ProcessMovement(Rectangle proposedRectangle)

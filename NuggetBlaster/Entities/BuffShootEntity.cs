@@ -11,7 +11,7 @@ namespace NuggetBlaster.Entities
 
         public override PlayerEntity AddBuff(PlayerEntity entity)
         {
-            if (entity.ShootBuffLevel <= PlayerEntity.MaxShootBuffLevel)
+            if (entity.ShootBuffLevel < PlayerEntity.MaxShootBuffLevel)
                 entity.ShootBuffLevel++;
             return entity;
         }

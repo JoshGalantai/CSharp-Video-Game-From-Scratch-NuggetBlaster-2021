@@ -7,26 +7,24 @@ namespace NuggetBlaster.Entities
 {
     public class PlayerEntity : Entity
     {
-        public const int MaxShootBuffLevel = 3;
-
-        public long DamageableCooldownTimer { get; set; } = 0;
-        public int  DamageableCooldownMS    { get; set; } = 500;
-        public int  ShootBuffLevel          { get; set; } = 0;
+        public const int MaxShootBuffLevel                     = 4;
+        public long      DamageableCooldownTimer { get; set; } = 0;
+        public int       DamageableCooldownMS    { get; set; } = 1000;
+        public int       ShootBuffLevel          { get; set; } = 0;
 
         public PlayerEntity(Rectangle gameCanvas) : base(gameCanvas, new Rectangle(0, gameCanvas.Height/2, (int)(gameCanvas.Width*0.1), (int)(gameCanvas.Width*0.05)), Resources.nugget) {
             BaseSpeed       = 0.2;
             Team            = 1;
             CanShoot        = true;
-            Damage          = 1;
             ShootCooldownMS = 400;
         }
 
-        public override void TakeDamage(int Damage)
+        public override void TakeDamage(Entity entity)
         {
             if (! Damageable || DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < DamageableCooldownTimer)
                 return;
 
-            HitPoints -= Damage;
+            HitPoints -= entity.Damage;
             if (ShootBuffLevel > 0)
                 ShootBuffLevel--;
 
@@ -44,14 +42,16 @@ namespace NuggetBlaster.Entities
             if (CheckCanShoot())
             {
                 ShootCooldown();
-                int x = SpriteRectangle.Right + 20;
-                int y = SpriteRectangle.Top + (SpriteRectangle.Height / 2) - (ProjectileHeight / 2);
+                int x      = SpriteRectangle.Right + 20;
+                int y      = SpriteRectangle.Top + (SpriteRectangle.Height / 2) - (ProjectileHeight / 2);
+                var sprite = ShootBuffLevel >= 4 ? Resources.allyProjectileSuper : Resources.allyProjectile;
+                var multi  = ShootBuffLevel >= 4 ? 3.0 : 2.0;
 
-                ProjectileEntity projectile = new(GameRectangle, new Rectangle(new Point(x, y + (ShootBuffLevel == 1 ? (ProjectileHeight / 2) : 0)), new Size(ProjectileWidth, ProjectileHeight)), Resources.allyProjectile)
+                ProjectileEntity projectile = new(GameRectangle, new Rectangle(new Point(x, y + (ShootBuffLevel == 1 ? (ProjectileHeight / 2) : 0)), new Size(ProjectileWidth, ProjectileHeight)), sprite)
                 {
                     MoveRight  = true,
                     BaseSpeed  = BaseSpeed,
-                    SpeedMulti = 2.0,
+                    SpeedMulti = multi,
                     Team       = Team,
                     Damage     = Damage
                 };

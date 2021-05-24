@@ -121,11 +121,17 @@
   <data name="allyProjectile" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\allyProjectile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="allyProjectileSuper" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\allyProjectileSuper.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="background" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\background.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="boom" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\boom.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="bossPickle" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\bossPickle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="bossStage" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\bossStage.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -148,6 +154,9 @@
   <data name="enemyProjectile" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\enemyProjectile.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="heal" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\heal.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="heart" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\heart.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -163,8 +172,14 @@
   <data name="nugget_1lg_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\nugget_1lg_icon.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="oof" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\oof.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="pickle" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\pickle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="postBoss" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\postBoss.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="shoot" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\shoot.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -180,5 +195,8 @@
   </data>
   <data name="title" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\title.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="upgrade" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\upgrade.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

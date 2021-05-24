@@ -21,15 +21,14 @@ namespace NuggetBlaster
         private Image     Heart       = Resources.heart;
         private Image     EmptyHeart  = Resources.emptyHeart;
         private Rectangle HeartRect;
+        private Rectangle BossHPRect;
 
         private readonly bool Analytics    = false;
         private          long msDraw       = 0;
         private          long msProcessing = 0;
 
         private readonly double AspectRatio       = (double)16/9;
-        private readonly int    CanvasEdgePadding = 10;
-
-        
+        private readonly int    CanvasEdgePadding = 10;       
 
         public GameForm()
         {
@@ -82,6 +81,13 @@ namespace NuggetBlaster
                     e.Graphics.DrawImage(i > GameEngine.GetPlayerHP() ? EmptyHeart : Heart, new Rectangle(heartLocation, HeartRect.Size));
                 }
 
+                int bossHealthPercent = GameEngine.GetBossHealthPercent();
+                if (bossHealthPercent > 0)
+                {
+                    e.Graphics.FillRectangle(new SolidBrush(Color.Red), BossHPRect);
+                    e.Graphics.FillRectangle(new SolidBrush(Color.Lime), new Rectangle(BossHPRect.Location, new Size(BossHPRect.Width * bossHealthPercent / 100, BossHPRect.Height)));
+                }
+
                 double UIScaling = (double)GameCanvas.Width / GameEngine.GameArea.Width;
                 IDictionary<string, Image> resizedSprites  = GameEngine.GetEntitySpriteList();
                 IDictionary<string, Image> originalSprites = GameEngine.GetEntitySpriteList(true);
@@ -94,6 +100,16 @@ namespace NuggetBlaster
                         GameEngine.CacheResizedEntitySprite(resizedSprites[rectangle.Key], rectangle.Key);
                     }
                     e.Graphics.DrawImage(resizedSprites[rectangle.Key], resizedRectangle);
+                    if (rectangle.Key == "boss")
+                    {
+                        if (bossHealthPercent > 0)
+                        {
+                            Point location = new((int)(rectangle.Value.X + rectangle.Value.Width * 0.3), (int)(rectangle.Value.Y - rectangle.Value.Width * 0.15));
+                            Size  size     = new((int)(rectangle.Value.Width * 0.4), (int)(rectangle.Value.Width * 0.03));
+                            e.Graphics.FillRectangle(new SolidBrush(Color.Red), new Rectangle(location, size));
+                            e.Graphics.FillRectangle(new SolidBrush(Color.Lime), new Rectangle(location, new Size(size.Width * bossHealthPercent / 100, size.Height)));
+                        }
+                    }
                 }
             }
             else
@@ -135,6 +151,7 @@ namespace NuggetBlaster
             KeysRect       = new Rectangle((int)(GameCanvas.Width - (GameCanvas.Width * 0.2)) - CanvasEdgePadding, (int)(GameCanvas.Height - (GameCanvas.Height * 0.1)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.2), (int)(GameCanvas.Height * 0.1));
             TitleRect      = new Rectangle((int)(GameCanvas.Width / 2 - GameCanvas.Width * 0.8 / 2), (int)(GameCanvas.Height / 2 - GameCanvas.Height * 0.2 / 2), (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.2));
             HeartRect      = new Rectangle(CanvasEdgePadding, GameCanvas.Height/15+CanvasEdgePadding*2, (int)(GameCanvas.Width*0.053), (int)(GameCanvas.Width * 0.036));
+            BossHPRect     = new Rectangle((int)(GameCanvas.Width * 0.1), (int)(GameCanvas.Height - (GameCanvas.Width * 0.07)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.025));
 
             Background = ResizeImage(Resources.background, BackgroundRect);
             Keys       = ResizeImage(Resources.keysWhite, KeysRect);

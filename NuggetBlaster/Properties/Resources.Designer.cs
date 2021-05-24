@@ -73,6 +73,16 @@ namespace NuggetBlaster.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap allyProjectileSuper {
+            get {
+                object obj = ResourceManager.GetObject("allyProjectileSuper", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap background {
             get {
                 object obj = ResourceManager.GetObject("background", resourceCulture);
@@ -86,6 +96,16 @@ namespace NuggetBlaster.Properties {
         internal static System.IO.UnmanagedMemoryStream boom {
             get {
                 return ResourceManager.GetStream("boom", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap bossPickle {
+            get {
+                object obj = ResourceManager.GetObject("bossPickle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -159,6 +179,15 @@ namespace NuggetBlaster.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream heal {
+            get {
+                return ResourceManager.GetStream("heal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap heart {
@@ -209,12 +238,30 @@ namespace NuggetBlaster.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream oof {
+            get {
+                return ResourceManager.GetStream("oof", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap pickle {
             get {
                 object obj = ResourceManager.GetObject("pickle", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream postBoss {
+            get {
+                return ResourceManager.GetStream("postBoss", resourceCulture);
             }
         }
         
@@ -260,6 +307,15 @@ namespace NuggetBlaster.Properties {
         internal static System.IO.UnmanagedMemoryStream title {
             get {
                 return ResourceManager.GetStream("title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream upgrade {
+            get {
+                return ResourceManager.GetStream("upgrade", resourceCulture);
             }
         }
     }

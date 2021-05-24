@@ -19,7 +19,7 @@ namespace NuggetBlaster.Entities
         public virtual int ProjectileWidth { get; set; } = 0;
         public virtual int ProjectileHeight { get; set; } = 0;
         public virtual bool Damageable { get; set; } = true;
-        public virtual int Damage { get; set; } = 0;
+        public virtual int Damage { get; set; } = 1;
         public virtual int HitPoints { get; set; } = 1;
         public virtual long ShootCooldownTimer { get; set; } = 0;
         public virtual int ShootCooldownMS { get; set; } = 1500;
@@ -55,10 +55,10 @@ namespace NuggetBlaster.Entities
             return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer;
         }
 
-        public virtual void TakeDamage(int Damage)
+        public virtual void TakeDamage(Entity entity)
         {
             if (Damageable)
-                HitPoints -= Damage;
+                HitPoints -= entity.Damage;
         }
 
         public void CalculateMovement(int ticks)
