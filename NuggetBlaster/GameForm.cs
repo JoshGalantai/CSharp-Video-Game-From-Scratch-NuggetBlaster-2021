@@ -27,6 +27,7 @@ namespace NuggetBlaster
         private Rectangle TitleRect;
         private Rectangle HeartRect;
         private Rectangle BossHPRect;
+        private Point     LevelLocation;
 
         // Game vars
         public bool PlayerIsTranslucent = false; // After taking damage player becomes translucent for a short period
@@ -99,12 +100,12 @@ namespace NuggetBlaster
                 Rectangle resizedRectangle;
                 foreach (KeyValuePair<string, Rectangle> rectangle in GameEngine.GetEntityRectangleList()) {
                     resizedRectangle = ResizeRectangle(rectangle.Value, UIScaling);
-                    if (resizedRectangle.Width != resizedSprites[rectangle.Key].Width || PlayerIsTranslucent != GameEngine.GetPlayerIsInvulnerable())
+                    if (resizedRectangle.Width != resizedSprites[rectangle.Key].Width || (rectangle.Key == "player" && PlayerIsTranslucent != GameEngine.GetPlayerIsInvulnerable()))
                     {
                         resizedSprites[rectangle.Key] = ResizeImage(originalSprites[rectangle.Key], resizedRectangle);
 
                         // Make player appear "ghostly" if they are currently in invincibility frames
-                        if (GameEngine.GetPlayerIsInvulnerable())
+                        if (GameEngine.GetPlayerIsInvulnerable() && rectangle.Key == "player")
                             resizedSprites[rectangle.Key] = ToolStripRenderer.CreateDisabledImage(resizedSprites[rectangle.Key]);
                         GameEngine.CacheResizedEntitySprite(resizedSprites[rectangle.Key], rectangle.Key);
                         PlayerIsTranslucent = GameEngine.GetPlayerIsInvulnerable();
@@ -121,6 +122,7 @@ namespace NuggetBlaster
                         }
                     }
                 }
+                e.Graphics.DrawString("Level " + GameEngine.GameStage, HeaderFont, new SolidBrush(Color.White), LevelLocation.X, LevelLocation.Y, new StringFormat());
             }
             else
             {
@@ -148,7 +150,6 @@ namespace NuggetBlaster
                     Size = new Size(Size.Width, (int)(Size.Width / AspectRatio));
                 ResizeUI();
             }
-                
         }
 
         private void ResizeUI()
@@ -160,12 +161,13 @@ namespace NuggetBlaster
             GameCanvas.Height = ClientSize.Height;
             GameCanvas.Width  = ClientSize.Width;
 
-            HeaderFont = new Font("Arial Narrow", GameCanvas.Height/15, FontStyle.Regular, GraphicsUnit.Pixel);
+            HeaderFont     = new Font("Arial Narrow", GameCanvas.Height/15, FontStyle.Regular, GraphicsUnit.Pixel);
             BackgroundRect = new Rectangle((int)(BackgroundRect.X*scaling), 0, GameCanvas.Width * 2, GameCanvas.Height);
             KeysRect       = new Rectangle((int)(GameCanvas.Width - (GameCanvas.Width * 0.2)) - CanvasEdgePadding, (int)(GameCanvas.Height - (GameCanvas.Height * 0.1)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.2), (int)(GameCanvas.Height * 0.1));
             TitleRect      = new Rectangle((int)(GameCanvas.Width / 2 - GameCanvas.Width * 0.8 / 2), (int)(GameCanvas.Height / 2 - GameCanvas.Height * 0.2 / 2), (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.2));
-            HeartRect      = new Rectangle(CanvasEdgePadding, GameCanvas.Height/15+CanvasEdgePadding*2, (int)(GameCanvas.Width*0.053), (int)(GameCanvas.Width * 0.036));
+            HeartRect      = new Rectangle((int)(GameCanvas.Width - (GameCanvas.Width * 0.10) - (GameCanvas.Width * 0.05 * Engine.MaxPlayerHP) - CanvasEdgePadding), CanvasEdgePadding, (int)(GameCanvas.Width*0.05), (int)(GameCanvas.Width * 0.04));
             BossHPRect     = new Rectangle((int)(GameCanvas.Width * 0.1), (int)(GameCanvas.Height - (GameCanvas.Width * 0.07)) - CanvasEdgePadding, (int)(GameCanvas.Width * 0.8), (int)(GameCanvas.Height * 0.025));
+            LevelLocation  = new Point((int)(GameCanvas.Width - (GameCanvas.Width * 0.10)) - CanvasEdgePadding, CanvasEdgePadding);
 
             Background = ResizeImage(Resources.background, BackgroundRect);
             Keys       = ResizeImage(Resources.keysWhite, KeysRect);
