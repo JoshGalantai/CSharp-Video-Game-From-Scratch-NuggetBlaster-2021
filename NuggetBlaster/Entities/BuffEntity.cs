@@ -17,7 +17,7 @@ namespace NuggetBlaster.Entities
 
         public virtual PlayerEntity AddBuff(PlayerEntity entity)
         {
-            if (entity.HitPoints < Engine.MaxPlayerHP)
+            if (entity.HitPoints < EntityManager.MaxPlayerHP)
                 entity.HitPoints++;
             return entity;
         }

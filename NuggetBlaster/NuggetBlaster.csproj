@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Helpers\DrawHelper.cs~RF149d20f2.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <COMReference Include="WMPLib">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>

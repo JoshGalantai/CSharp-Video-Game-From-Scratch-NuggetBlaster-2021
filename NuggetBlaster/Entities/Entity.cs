@@ -1,4 +1,5 @@
-﻿using NuggetBlaster.Properties;
+﻿using NuggetBlaster.Helpers;
+using NuggetBlaster.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -33,7 +34,7 @@ namespace NuggetBlaster.Entities
         {
             SpriteRectangle = spriteRectangle;
             GameRectangle   = gameRectangle;
-            SpriteOriginal  = SpriteCached = GameForm.ResizeImage(sprite ?? SpriteOriginal, SpriteRectangle);
+            SpriteOriginal  = SpriteCached = DrawHelper.ResizeImage(sprite ?? SpriteOriginal, SpriteRectangle);
 
             ProjectileHeight = (int)(GameRectangle.Width * 0.0167);
             ProjectileWidth  = (int)(GameRectangle.Width * 0.03125);
@@ -63,8 +64,8 @@ namespace NuggetBlaster.Entities
         public void CalculateMovement(int ticks)
         {
             Point location = SpriteRectangle.Location;
-            location.X += (MoveRight ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0) - (MoveLeft ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0);
-            location.Y += (MoveDown  ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0) - (MoveUp   ? (int)GameCore.Engine.GetPPF(GetSpeed(ticks)) : 0);
+            location.X += (MoveRight ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0) - (MoveLeft ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0);
+            location.Y += (MoveDown  ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0) - (MoveUp   ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0);
             ProcessMovement(new Rectangle(location, SpriteRectangle.Size));
         }
 
