@@ -201,7 +201,6 @@ namespace NuggetBlaster.GameCore
         {
             MediaPlayer MediaPlayer = new();
             MediaPlayer.Open(new Uri(path));
-            MediaPlayer.Volume = 1;
             MediaPlayer.Play();
         }
 

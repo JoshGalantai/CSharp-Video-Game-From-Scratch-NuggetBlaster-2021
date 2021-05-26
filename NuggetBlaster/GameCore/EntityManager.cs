@@ -141,7 +141,7 @@ namespace NuggetBlaster.GameCore
             string[] entityKeys = EntityDataList.Keys.ToArray();
             foreach (string targetKey in entityKeys)
             {
-                if (!EntityDataList.ContainsKey(targetKey))
+                if (!EntityDataList.ContainsKey(targetKey) || EntityDataList[targetKey].GetType() == typeof(ProjectileEntity))
                     continue;
                 foreach (string comparisonKey in entityKeys)
                 {
