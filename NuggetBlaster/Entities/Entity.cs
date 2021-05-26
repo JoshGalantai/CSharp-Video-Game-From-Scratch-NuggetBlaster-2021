@@ -8,33 +8,33 @@ namespace NuggetBlaster.Entities
 {
     public abstract class Entity
     {
-        public virtual double    BaseSpeed          { get; set; } = 0.2;
-        public virtual double    SpeedMulti         { get; set; } = 1.0;
-        public virtual bool      MoveRight          { get; set; } = false;
-        public virtual bool      MoveLeft           { get; set; } = false;
-        public virtual bool      MoveUp             { get; set; } = false;
-        public virtual bool      MoveDown           { get; set; } = false;
-        public virtual bool      Spacebar           { get; set; } = false;
-        public virtual int       Team               { get; set; } = 0;
-        public virtual bool      CanShoot           { get; set; } = false;
-        public virtual int       ProjectileWidth    { get; set; } = 0;
-        public virtual int       ProjectileHeight   { get; set; } = 0;
-        public virtual bool      Damageable         { get; set; } = true;
-        public virtual int       Damage             { get; set; } = 1;
-        public virtual int       HitPoints          { get; set; } = 1;
-        public virtual long      ShootCooldownTimer { get; set; } = 0;
-        public virtual int       ShootCooldownMS    { get; set; } = 1500;
-        public virtual int       PointsOnKill       { get; set; } = 0;
-        public virtual Image     SpriteOriginal     { get; set; } = Resources.pickle;
-        public virtual Image     SpriteCached       { get; set; } = Resources.pickle;
-        public virtual Rectangle SpriteRectangle    { get; set; } = new Rectangle(0, 0, 0, 0);
-        public virtual Rectangle GameRectangle      { get; set; } = new Rectangle(0, 0, 0, 0);
+        public double    BaseSpeed          = 0.2;
+        public double    SpeedMulti         = 1.0;
+        public bool      MoveRight          = false;
+        public bool      MoveLeft           = false;
+        public bool      MoveUp             = false;
+        public bool      MoveDown           = false;
+        public bool      Spacebar           = false;
+        public int       Team               = 0;
+        public bool      CanShoot           = false;
+        public bool      Damageable         = true;
+        public int       Damage             = 1;
+        public int       HitPoints          = 1;
+        public long      ShootCooldownTimer = 0;
+        public int       ShootCooldownMS    = 1500;
+        public int       PointsOnKill       = 0;
+        public Image     SpriteOriginal     = Resources.pickle;
+        public Image     SpriteCached;
+        public Rectangle SpriteRectangle;
+        public Rectangle GameRectangle;
+        public int       ProjectileWidth;
+        public int       ProjectileHeight;
 
         public Entity(Rectangle gameRectangle, Rectangle spriteRectangle, Image sprite = null)
         {
             SpriteRectangle = spriteRectangle;
             GameRectangle   = gameRectangle;
-            SpriteOriginal  = SpriteCached = DrawHelper.ResizeImage(sprite ?? SpriteOriginal, SpriteRectangle);
+            SpriteOriginal  = SpriteCached = DrawManager.ResizeImage(sprite ?? SpriteOriginal, SpriteRectangle);
 
             ProjectileHeight = (int)(GameRectangle.Width * 0.0167);
             ProjectileWidth  = (int)(GameRectangle.Width * 0.03125);
@@ -45,12 +45,12 @@ namespace NuggetBlaster.Entities
             return new List<ProjectileEntity>();
         }
 
-        public void ShootCooldown()
+        protected void ShootCooldown()
         {
             ShootCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + ShootCooldownMS;
         }
 
-        public virtual bool CheckCanShoot()
+        protected virtual bool CheckCanShoot()
         {
             return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer;
         }
@@ -64,19 +64,23 @@ namespace NuggetBlaster.Entities
         public void CalculateMovement(int ticks)
         {
             Point location = SpriteRectangle.Location;
-            location.X += (MoveRight ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0) - (MoveLeft ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0);
-            location.Y += (MoveDown  ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0) - (MoveUp   ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetSpeed(ticks)) : 0);
+            location.X += (MoveRight ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetDistanceTravelled(ticks)) : 0) - (MoveLeft ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetDistanceTravelled(ticks)) : 0);
+            location.Y += (MoveDown  ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetDistanceTravelled(ticks)) : 0) - (MoveUp   ? (int)GameCore.Engine.ConvertPerSecondToPerFrame(GetDistanceTravelled(ticks)) : 0);
             ProcessMovement(new Rectangle(location, SpriteRectangle.Size));
         }
 
-        public virtual void ProcessMovement(Rectangle proposedRectangle)
+        protected virtual void ProcessMovement(Rectangle proposedRectangle)
         {
             SpriteRectangle = proposedRectangle;
         }
 
-        public double GetSpeed(int ticks)
+        /// <summary>
+        /// Calculate distance of entity movement during a process phase
+        /// Note: When moving diagonally we must calculate distance differently
+        /// (1 unut up/down & 1 unit left/right is greater than 1 total unit of distance)
+        /// </summary>
+        private double GetDistanceTravelled(int ticks)
         {
-            // If Entity is moving diagonally we must reduce speed for movement calculations. (1 up/down & 1 left/right is greater than 1 total unit of distance)
             double diagonalMovementModifier = ((Convert.ToInt32(MoveRight) + Convert.ToInt32(MoveLeft) + Convert.ToInt32(MoveUp) + Convert.ToInt32(MoveDown)) == 2) ? 1 / Math.Sqrt(2) : 1;
             double totalDistance            = BaseSpeed * SpeedMulti * ticks * GameRectangle.Width * diagonalMovementModifier;
            

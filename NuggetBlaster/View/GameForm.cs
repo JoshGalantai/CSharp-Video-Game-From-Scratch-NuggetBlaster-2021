@@ -8,8 +8,8 @@ namespace NuggetBlaster
 {
     public partial class GameForm : Form
     {
-        private readonly Engine     GameEngine;
-        private readonly DrawHelper DrawHelper;
+        private readonly Engine      _gameEngine;
+        private readonly DrawManager _drawHelper;
 
         public const bool Analytics    = false;
         public       long DrawMS       = 0;
@@ -19,13 +19,13 @@ namespace NuggetBlaster
         {
             InitializeComponent();
 
-            GameEngine = new Engine(this);
-            DrawHelper = new DrawHelper(this);
+            _gameEngine = new Engine(this);
+            _drawHelper = new DrawManager(this);
 
             GameTimer.Interval = 1000/Engine.Fps;
             GameTimer.Start();
 
-            DrawHelper.ResizeUI();
+            _drawHelper.ResizeUI();
         }
 
         public Rectangle GetGameAreaAsRectangle()
@@ -40,25 +40,25 @@ namespace NuggetBlaster
 
         public void SetPlayerIsTranslucent(bool playerIsTranslucent)
         {
-            DrawHelper.PlayerIsTranslucent = playerIsTranslucent;
+            _drawHelper.PlayerIsTranslucent = playerIsTranslucent;
         }
 
         #region Events
 
         private void GameKeyDown(object sender, KeyEventArgs e)
         {
-            GameEngine.GameKeyAction(e.KeyCode.ToString(), true);
+            _gameEngine.GameKeyAction(e.KeyCode.ToString(), true);
         }
 
         private void GameKeyUp(object sender, KeyEventArgs e)
         {
-            GameEngine.GameKeyAction(e.KeyCode.ToString(), false);
+            _gameEngine.GameKeyAction(e.KeyCode.ToString(), false);
         }
 
         private void GameTimer_Tick(object sender, EventArgs e)
         {
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            GameEngine.ProcessGameTick();
+            _gameEngine.ProcessGameTick();
             ProcessingMS += DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - timestamp;
 
             GameCanvas.Invalidate();
@@ -68,22 +68,22 @@ namespace NuggetBlaster
         {
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-            DrawHelper.DrawBackground(e.Graphics, GameEngine);
+            _drawHelper.DrawBackground(e.Graphics, _gameEngine);
 
-            if (GameEngine.IsRunning)
+            if (_gameEngine.IsRunning)
             {
-                DrawHelper.DrawPlayerHealth(e.Graphics, GameEngine);
-                DrawHelper.DrawBossHealthBarBottom(e.Graphics, GameEngine);
-                DrawHelper.DrawGameSprites(e.Graphics, GameEngine);
-                DrawHelper.DrawLevelText(e.Graphics, GameEngine);
+                _drawHelper.DrawPlayerHealth(e.Graphics, _gameEngine);
+                _drawHelper.DrawBossHealthBarBottom(e.Graphics, _gameEngine);
+                _drawHelper.DrawGameSprites(e.Graphics, _gameEngine);
+                _drawHelper.DrawLevelText(e.Graphics, _gameEngine);
             }
             else
             {
-                DrawHelper.DrawTitle(e.Graphics);
+                _drawHelper.DrawTitle(e.Graphics);
             }
 
-            DrawHelper.DrawScore(e.Graphics, GameEngine);
-            DrawHelper.DrawKeys(e.Graphics);
+            _drawHelper.DrawScore(e.Graphics, _gameEngine);
+            _drawHelper.DrawKeys(e.Graphics);
 
             DrawMS += DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - timestamp;
         }
@@ -91,13 +91,13 @@ namespace NuggetBlaster
         private void GameForm_ResizeEnd(object sender, EventArgs e)
         {
             if (ClientSize.Height != 0 && ClientSize.Width != 0 && (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width))
-                DrawHelper.ResizeUI();
+                _drawHelper.ResizeUI();
         }
 
         private void GameForm_Resize(object sender, EventArgs e)
         {
             if (ClientSize.Height != 0 && ClientSize.Width != 0 && (GameCanvas.Height != ClientSize.Height || GameCanvas.Width != ClientSize.Width))
-                DrawHelper.ResizeUI();
+                _drawHelper.ResizeUI();
         }
 
         #endregion

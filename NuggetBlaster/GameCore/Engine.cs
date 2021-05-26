@@ -9,54 +9,54 @@ namespace NuggetBlaster.GameCore
 {
     class Engine
     {
-        private readonly GameForm      GameUI;
+        private          SoundPlayer   _musicPlayer;
+        private readonly GameForm      _gameUI;
         public           Rectangle     GameArea;
         public  readonly EntityManager EntityManager;
-        private          SoundPlayer   MusicPlayer;
 
         // Engine Config
-        public  const int Fps                   = 60;
-        private const int MaxMSCatchUpPerTick   = 40;
-        private const int MaxMSFallBehindCutoff = 1000;
+        public const int Fps                   = 60;
+        public const int MaxMSCatchUpPerTick   = 40;
+        public const int MaxMSFallBehindCutoff = 1000;
+
+        // Game Config
+        private const int _stage2StartMS = 60000;
+        private const int _stage3StartMS = 120000;
+        private const int _stage4StartMS = 180000;
 
         // Engine Vars
+        private int  _ticksTotal;
+        private long _msStartTime;
         public  int  TicksCurrent;
         public  int  TicksToProcess;
         public  bool IsRunning;
-        private int  TicksTotal;
-        private long MSStartTime;
-
-        // Game Config
-        private const int Stage2StartMS = 60000;
-        private const int Stage3StartMS = 120000;
-        private const int Stage4StartMS = 180000;
 
         // Game Vars
         public int GameStage;
         public int Score;
 
         public Engine(GameForm gameUI) {
-            GameUI    = gameUI;
+            _gameUI   = gameUI;
             IsRunning = false;
 
             EntityManager = new EntityManager(this);
 
-            MusicPlayer = new(Resources.title);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.title);
+            _musicPlayer.PlayLooping();
         }
 
         #region Manage Game State
 
         public void StartGame()
         {
-            IsRunning   = true;
-            MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            IsRunning    = true;
+            _msStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-            Score = GameStage = TicksTotal = TicksCurrent = 0;
+            Score = GameStage = _ticksTotal = TicksCurrent = 0;
 
-            GameUI.SetPlayerIsTranslucent(false);
+            _gameUI.SetPlayerIsTranslucent(false);
 
-            GameArea = GameUI.GetGameAreaAsRectangle();
+            GameArea = _gameUI.GetGameAreaAsRectangle();
             EntityManager.Reset(GameArea);
         }
 
@@ -65,8 +65,8 @@ namespace NuggetBlaster.GameCore
             IsRunning = false;
             EntityManager.ClearEntities();
 
-            MusicPlayer = new(Resources.title);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.title);
+            _musicPlayer.PlayLooping();
         }
 
         public void ProcessGameTick()
@@ -78,7 +78,7 @@ namespace NuggetBlaster.GameCore
                 CheckGameState();
                 ProcessGameStage();
                 EntityManager.ProcessEntityMovement();
-                EntityManager.ProcessEntityCollissions();
+                EntityManager.ProcessEntityCollisions();
                 EntityManager.ProcessEntityCreation();
                 EntityManager.ProcessProjectileCreation();
                 CheckGameState();
@@ -97,13 +97,13 @@ namespace NuggetBlaster.GameCore
         public void ProcessGameStage()
         {
             double msPerTick = 1000.0 / Fps;
-            if (TicksTotal * msPerTick < Stage2StartMS && GameStage != 1)
+            if (_ticksTotal * msPerTick < _stage2StartMS && GameStage != 1)
                 SetGameStageOne();
-            else if (TicksTotal * msPerTick > Stage2StartMS && GameStage == 1)
+            else if (_ticksTotal * msPerTick > _stage2StartMS && GameStage == 1)
                 SetGameStageTwo();
-            else if (TicksTotal * msPerTick > Stage3StartMS && GameStage == 2)
+            else if (_ticksTotal * msPerTick > _stage3StartMS && GameStage == 2)
                 SetGameStageThree();
-            else if (TicksTotal * msPerTick > Stage4StartMS && GameStage == 3)
+            else if (_ticksTotal * msPerTick > _stage4StartMS && GameStage == 3)
                 SetGameStageFour();
             else if (GameStage == 4 && EntityManager.GetBossHealthPercent() == 0)
                 SetGameStageFive();
@@ -144,8 +144,8 @@ namespace NuggetBlaster.GameCore
             EntityManager.MaxEnemies      = 6;
             EntityManager.EnemySpeedMulti = 1.0;
 
-            MusicPlayer = new(Resources.stageOne);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.stageOne);
+            _musicPlayer.PlayLooping();
         }
 
         public void SetGameStageTwo()
@@ -154,8 +154,8 @@ namespace NuggetBlaster.GameCore
             EntityManager.MaxEnemies      = 7;
             EntityManager.EnemySpeedMulti = 1.1;
 
-            MusicPlayer = new(Resources.stageTwo);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.stageTwo);
+            _musicPlayer.PlayLooping();
         }
 
         public void SetGameStageThree()
@@ -164,8 +164,8 @@ namespace NuggetBlaster.GameCore
             EntityManager.MaxEnemies      = 7;
             EntityManager.EnemySpeedMulti = 1.2;
 
-            MusicPlayer = new(Resources.StageThree);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.StageThree);
+            _musicPlayer.PlayLooping();
         }
 
         public void SetGameStageFour()
@@ -175,8 +175,8 @@ namespace NuggetBlaster.GameCore
             EntityManager.EnemySpeedMulti = 1.0;
             EntityManager.SpawnBoss       = true;
 
-            MusicPlayer = new(Resources.bossStage);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.bossStage);
+            _musicPlayer.PlayLooping();
         }
 
         public void SetGameStageFive()
@@ -185,8 +185,8 @@ namespace NuggetBlaster.GameCore
             EntityManager.MaxEnemies      = 7;
             EntityManager.EnemySpeedMulti = 1.0;
 
-            MusicPlayer = new(Resources.postBoss);
-            MusicPlayer.PlayLooping();
+            _musicPlayer = new(Resources.postBoss);
+            _musicPlayer.PlayLooping();
         }
 
         #endregion
@@ -213,12 +213,12 @@ namespace NuggetBlaster.GameCore
         public void CalculateTicksToProcess()
         {
             TicksToProcess = 1;
-            long msElapsed = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - MSStartTime;
+            long msElapsed = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _msStartTime;
             double msPerTick = 1000.0 / Fps;
             double msBehind = msElapsed - (TicksCurrent * msPerTick);
             if (msBehind > MaxMSFallBehindCutoff)
             {
-                MSStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                _msStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 TicksCurrent = 0;
             }
             else if (msBehind > msPerTick)
@@ -226,7 +226,7 @@ namespace NuggetBlaster.GameCore
                 TicksToProcess = msBehind > MaxMSCatchUpPerTick ? (int)(MaxMSCatchUpPerTick / msPerTick) : (int)(msBehind / msPerTick);
             }
             TicksCurrent += TicksToProcess;
-            TicksTotal += TicksToProcess;
+            _ticksTotal +=  TicksToProcess;
         }
 
         /// <summary>

@@ -7,9 +7,9 @@ namespace NuggetBlaster.Entities
 {
     class EnemyEntity : Entity
     {
-        protected bool IsDamagedOnTouch    { get; set; } = true; // Entity only takes damage from projectiles
-        protected bool AllowHorizontalExit { get; set; } = true; // Entity exits left or right instead of "bouncing" off
-        protected bool TripleShot          { get; set; } = false; // Entity has alternate fire pattern (3 shots)
+        protected bool IsDamagedOnTouch    = true;  // Entity only takes damage from projectiles
+        protected bool AllowHorizontalExit = true;  // Entity exits left or right instead of "bouncing" off
+        protected bool TripleShot          = false; // Entity has alternate fire pattern (3 shots)
 
         public EnemyEntity(Rectangle gameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(gameCanvas, spriteRectangle, sprite)
         {
@@ -57,7 +57,10 @@ namespace NuggetBlaster.Entities
                 HitPoints -= entity.Damage;
         }
 
-        public override void ProcessMovement(Rectangle proposedRectangle)
+        /// <summary>
+        /// Process entity movement - Optionally enemies can "bounce" off game bounds depending on entity config
+        /// </summary>
+        protected override void ProcessMovement(Rectangle proposedRectangle)
         {
             // "Bounce" off left and right of game area
             int x = proposedRectangle.X < 0 && !AllowHorizontalExit ? 0 : proposedRectangle.X;

@@ -6,23 +6,23 @@ using System.Windows.Forms;
 
 namespace NuggetBlaster.Helpers
 {
-    class DrawHelper
+    class DrawManager
     {
-        private const double AspectRatio       = (double)16 / 9;
-        private const int    CanvasEdgePadding = 10;
+        private const double _aspectRatio       = (double)16 / 9;
+        private const int    _canvasEdgePadding = 10;
 
-        private Font      HeaderFont = new("Arial Narrow", 1, FontStyle.Regular, GraphicsUnit.Pixel);
-        private Image     Background = Resources.background;
-        private Image     Keys       = Resources.keysWhite;
-        private Image     Title      = Resources.nuggetBlasterTitle;
-        private Image     Heart      = Resources.heart;
-        private Image     EmptyHeart = Resources.emptyHeart;
-        private Rectangle BackgroundRect;
-        private Rectangle KeysRect;
-        private Rectangle TitleRect;
-        private Rectangle HeartRect;
-        private Rectangle BossHPRect;
-        private Point     LevelLocation;
+        private Font      _headerFont = new("Arial Narrow", 1, FontStyle.Regular, GraphicsUnit.Pixel);
+        private Image     _background = Resources.background;
+        private Image     _keys       = Resources.keysWhite;
+        private Image     _title      = Resources.nuggetBlasterTitle;
+        private Image     _heart      = Resources.heart;
+        private Image     _emptyHeart = Resources.emptyHeart;
+        private Rectangle _backgroundRect;
+        private Rectangle _keysRect;
+        private Rectangle _titleRect;
+        private Rectangle _heartRect;
+        private Rectangle _bossHPRect;
+        private Point     _levelLocation;
 
         /// <summary>
         /// After taking damage player becomes translucent for a short period 
@@ -31,7 +31,7 @@ namespace NuggetBlaster.Helpers
 
         private readonly GameForm GameUI;
 
-        public DrawHelper(GameForm gameUI)
+        public DrawManager(GameForm gameUI)
         {
             GameUI = gameUI;
         }
@@ -43,18 +43,18 @@ namespace NuggetBlaster.Helpers
         /// </summary>
         public void DrawBackground(Graphics g, Engine engine)
         {
-            BackgroundRect.X = BackgroundRect.X < 0 - GameUI.GetGameCanvas().Width ? 0 : BackgroundRect.X;
-            BackgroundRect.X -= (int)(Engine.ConvertPerSecondToPerFrame(BackgroundRect.Width*0.04) * engine.TicksToProcess);
-            g.DrawImage(Background, BackgroundRect);
+            _backgroundRect.X = _backgroundRect.X < 0 - GameUI.GetGameCanvas().Width ? 0 : _backgroundRect.X;
+            _backgroundRect.X -= (int)(Engine.ConvertPerSecondToPerFrame(_backgroundRect.Width*0.04) * engine.TicksToProcess);
+            g.DrawImage(_background, _backgroundRect);
         }
 
         public void DrawPlayerHealth(Graphics g, Engine engine)
         {
-            Point heartLocation = HeartRect.Location;
+            Point heartLocation = _heartRect.Location;
             for (int i = 1; i <= EntityManager.MaxPlayerHP; i++)
             {
-                g.DrawImage(i > engine.EntityManager.GetPlayerHP() ? EmptyHeart : Heart, new Rectangle(heartLocation, HeartRect.Size));
-                heartLocation.X += HeartRect.Width;
+                g.DrawImage(i > engine.EntityManager.GetPlayerHP() ? _emptyHeart : _heart, new Rectangle(heartLocation, _heartRect.Size));
+                heartLocation.X += _heartRect.Width;
             }
         }
 
@@ -62,30 +62,30 @@ namespace NuggetBlaster.Helpers
         {
             if (engine.EntityManager.GetBossHealthPercent() > 0)
             {
-                g.FillRectangle(new SolidBrush(Color.Red), BossHPRect);
-                g.FillRectangle(new SolidBrush(Color.Lime), new Rectangle(BossHPRect.Location, new Size(BossHPRect.Width * engine.EntityManager.GetBossHealthPercent() / 100, BossHPRect.Height)));
+                g.FillRectangle(new SolidBrush(Color.Red), _bossHPRect);
+                g.FillRectangle(new SolidBrush(Color.Lime), new Rectangle(_bossHPRect.Location, new Size(_bossHPRect.Width * engine.EntityManager.GetBossHealthPercent() / 100, _bossHPRect.Height)));
             }
         }
 
         public void DrawLevelText(Graphics g, Engine engine)
         {
-            g.DrawString("LEVEL " + engine.GameStage, HeaderFont, new SolidBrush(Color.White), LevelLocation.X, LevelLocation.Y, new StringFormat());
+            g.DrawString("LEVEL " + engine.GameStage, _headerFont, new SolidBrush(Color.White), _levelLocation.X, _levelLocation.Y, new StringFormat());
         }
 
         public void DrawTitle(Graphics g)
         {
-            g.DrawImage(Title, TitleRect);
+            g.DrawImage(_title, _titleRect);
         }
 
         public void DrawScore(Graphics g, Engine engine)
         {
             string analytics = GameForm.Analytics ? " ticks: " + engine.TicksCurrent.ToString() + " drawMs: " + GameUI.DrawMS + " processMs: " + GameUI.ProcessingMS : "";
-            g.DrawString("SCORE: " + engine.Score + analytics, HeaderFont, new SolidBrush(Color.White), CanvasEdgePadding, CanvasEdgePadding, new StringFormat());
+            g.DrawString("SCORE: " + engine.Score + analytics, _headerFont, new SolidBrush(Color.White), _canvasEdgePadding, _canvasEdgePadding, new StringFormat());
         }
 
         public void DrawKeys(Graphics g)
         {
-            g.DrawImage(Keys, KeysRect);
+            g.DrawImage(_keys, _keysRect);
         }
 
         /// <summary>
@@ -136,55 +136,55 @@ namespace NuggetBlaster.Helpers
         {
             PictureBox gameCanvas = GameUI.GetGameCanvas();
 
-            if (GameUI.Size.Width != GameUI.Size.Height * AspectRatio)
-                GameUI.Size = new Size(GameUI.Size.Width, (int)(GameUI.Size.Width / AspectRatio));
+            if (GameUI.Size.Width != GameUI.Size.Height * _aspectRatio)
+                GameUI.Size = new Size(GameUI.Size.Width, (int)(GameUI.Size.Width / _aspectRatio));
 
             double scaling    = GameUI.ClientSize.Width / (double)gameCanvas.Width;
             gameCanvas.Height = GameUI.ClientSize.Height;
             gameCanvas.Width  = GameUI.ClientSize.Width;
 
-            int x = (int)(BackgroundRect.X * scaling);
+            int x = (int)(_backgroundRect.X * scaling);
             int y = 0;
             int w = gameCanvas.Width * 2;
             int h = gameCanvas.Height;
-            BackgroundRect = new Rectangle(x, y, w, h);
+            _backgroundRect = new Rectangle(x, y, w, h);
 
-            x = (int)(gameCanvas.Width - (gameCanvas.Width * 0.2)) - CanvasEdgePadding;
-            y = (int)(gameCanvas.Height - (gameCanvas.Height * 0.1)) - CanvasEdgePadding;
+            x = (int)(gameCanvas.Width - (gameCanvas.Width * 0.2)) - _canvasEdgePadding;
+            y = (int)(gameCanvas.Height - (gameCanvas.Height * 0.1)) - _canvasEdgePadding;
             w = (int)(gameCanvas.Width * 0.2);
             h = (int)(gameCanvas.Height * 0.1);
-            KeysRect = new Rectangle(x, y, w, h);
+            _keysRect = new Rectangle(x, y, w, h);
             
             x = (int)(gameCanvas.Width / 2 - gameCanvas.Width * 0.8 / 2);
             y = (int)(gameCanvas.Height / 2 - gameCanvas.Height * 0.2 / 2);
             w = (int)(gameCanvas.Width * 0.8);
             h = (int)(gameCanvas.Height * 0.2);
-            TitleRect = new Rectangle(x, y, w, h);
+            _titleRect = new Rectangle(x, y, w, h);
 
             x = (int)(gameCanvas.Width * 0.1);
-            y = (int)(gameCanvas.Height - (gameCanvas.Width * 0.07)) - CanvasEdgePadding;
+            y = (int)(gameCanvas.Height - (gameCanvas.Width * 0.07)) - _canvasEdgePadding;
             w = (int)(gameCanvas.Width * 0.8);
             h = (int)(gameCanvas.Height * 0.025);
-            BossHPRect = new Rectangle(x, y, w, h);
+            _bossHPRect = new Rectangle(x, y, w, h);
 
-            x = (int)(gameCanvas.Width - (gameCanvas.Width * 0.13)) - CanvasEdgePadding;
-            y = CanvasEdgePadding;
-            LevelLocation = new Point(x, y);
+            x = (int)(gameCanvas.Width - (gameCanvas.Width * 0.13)) - _canvasEdgePadding;
+            y = _canvasEdgePadding;
+            _levelLocation = new Point(x, y);
 
-            x = (int)(LevelLocation.X - (gameCanvas.Width * 0.05 * EntityManager.MaxPlayerHP) - CanvasEdgePadding);
-            y = LevelLocation.Y;
+            x = (int)(_levelLocation.X - (gameCanvas.Width * 0.05 * EntityManager.MaxPlayerHP) - _canvasEdgePadding);
+            y = _levelLocation.Y;
             w = (int)(gameCanvas.Width * 0.05);
             h = (int)(gameCanvas.Width * 0.04);
-            HeartRect = new Rectangle(x, y, w, h);
+            _heartRect = new Rectangle(x, y, w, h);
 
             h = (int)(gameCanvas.Height * 0.067);
-            HeaderFont = new Font("Arial Narrow", h, FontStyle.Regular, GraphicsUnit.Pixel);
+            _headerFont = new Font("Arial Narrow", h, FontStyle.Regular, GraphicsUnit.Pixel);
 
-            Background = ResizeImage(Resources.background, BackgroundRect);
-            Keys       = ResizeImage(Resources.keysWhite, KeysRect);
-            Title      = ResizeImage(Resources.nuggetBlasterTitle, TitleRect);
-            Heart      = ResizeImage(Resources.heart, HeartRect);
-            EmptyHeart = ResizeImage(Resources.emptyHeart, HeartRect);
+            _background = ResizeImage(Resources.background, _backgroundRect);
+            _keys       = ResizeImage(Resources.keysWhite, _keysRect);
+            _title      = ResizeImage(Resources.nuggetBlasterTitle, _titleRect);
+            _heart      = ResizeImage(Resources.heart, _heartRect);
+            _emptyHeart = ResizeImage(Resources.emptyHeart, _heartRect);
         }
 
         #endregion

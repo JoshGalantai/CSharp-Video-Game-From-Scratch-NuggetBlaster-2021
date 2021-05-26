@@ -32,7 +32,7 @@ namespace NuggetBlaster.Entities
             DamageableCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + DamageableCooldownMS;
         }
 
-        public override bool CheckCanShoot()
+        protected override bool CheckCanShoot()
         {
             return CanShoot && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > ShootCooldownTimer && Spacebar;
         }
@@ -84,7 +84,7 @@ namespace NuggetBlaster.Entities
         }
 
         // Make sure player does not go out of bounds
-        public override void ProcessMovement(Rectangle proposedRectangle)
+        protected override void ProcessMovement(Rectangle proposedRectangle)
         {
             int x = proposedRectangle.X < GameRectangle.X ? GameRectangle.X : proposedRectangle.X;
             int y = proposedRectangle.Y < GameRectangle.Y ? GameRectangle.Y : proposedRectangle.Y;

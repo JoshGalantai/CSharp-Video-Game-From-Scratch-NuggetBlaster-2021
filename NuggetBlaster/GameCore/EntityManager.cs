@@ -9,58 +9,64 @@ namespace NuggetBlaster.GameCore
 {
     class EntityManager
     {
-        private readonly Engine    GameEngine;
-        private          Rectangle GameArea;
-        private readonly Random    Random = new();
+        private readonly Engine    _gameEngine;
+        private readonly Random    _random = new();
+        private          Rectangle _gameArea;
 
-        private readonly IDictionary<string, string> EntitySoundEffectsList = new Dictionary<string, string>();
-        public  readonly IDictionary<string, Entity> EntityDataList         = new Dictionary<string, Entity>();
+        private readonly IDictionary<string, string> _entitySoundEffectsList = new Dictionary<string, string>();
+        public  readonly IDictionary<string, Entity> EntityDataList          = new Dictionary<string, Entity>();
 
         // Entity Config
-        public const int MaxPlayerHP              = 5;
-        public const int EnemySpawnCooldownMS     = 300;
-        public const int PowerUpSpawnInterval     = 7500;
-        public const int HeartPointsSpawnInterval = 10000;
+        public  const int MaxPlayerHP               = 5;
+        private const int _enemySpawnCooldownMS     = 300;
+        private const int _powerUpSpawnInterval     = 7500;
+        private const int _heartPointsSpawnInterval = 10000;
 
         // Entity Vars
-        public int    NextPowerUpSpawnPoints;
-        public int    NextHeartSpawnPoints;
-        public long   EnemySpawnCooldownTimer;
-        public double EnemySpeedMulti;
-        public int    MaxEnemies;
-        public int    EntityIterator;
-        public int    EnemyCount;
-        public bool   SpawnBoss;
+        private int    _nextPowerUpSpawnPoints;
+        private int    _nextHeartSpawnPoints;
+        private long   _enemySpawnCooldownTimer;
+        private int    _entityIterator;
+        private int    _enemyCount;
+        public  bool   SpawnBoss;
+        public  double EnemySpeedMulti;
+        public  int    MaxEnemies;
 
         public EntityManager(Engine gameEngine)
         {
-            GameEngine = gameEngine;
+            _gameEngine = gameEngine;
+
+            // Async audio player needed for SFX cannot read from resource - Copy to local
+            _entitySoundEffectsList["boom"] = Engine.GetResourceAsLocal(Resources.boom, "boom.wav");
+            _entitySoundEffectsList["shoot"] = Engine.GetResourceAsLocal(Resources.shoot, "shoot.wav");
+            _entitySoundEffectsList["heal"] = Engine.GetResourceAsLocal(Resources.heal, "heal.wav");
+            _entitySoundEffectsList["oof"] = Engine.GetResourceAsLocal(Resources.oof, "oof.wav");
+            _entitySoundEffectsList["upgrade"] = Engine.GetResourceAsLocal(Resources.upgrade, "upgrade.wav");
         }
 
+        /// <summary>
+        /// Reset entity related game values to defaults
+        /// </summary>
         public void Reset(Rectangle gameArea)
         {
-            GameArea = gameArea;
+            _gameArea = gameArea;
 
             SpawnBoss = false;
 
-            NextHeartSpawnPoints   = HeartPointsSpawnInterval;
-            NextPowerUpSpawnPoints = PowerUpSpawnInterval;
+            _nextHeartSpawnPoints   = _heartPointsSpawnInterval;
+            _nextPowerUpSpawnPoints = _powerUpSpawnInterval;
 
             if (!EntityDataList.ContainsKey("player"))
-                EntityDataList["player"] = new PlayerEntity(GameArea);
+                EntityDataList["player"] = new PlayerEntity(_gameArea);
             EntityDataList["player"].HitPoints = MaxPlayerHP;
-
-            // Async audio player needed for SFX cannot read from resource - Copy to local
-            EntitySoundEffectsList["boom"]    = Engine.GetResourceAsLocal(Resources.boom,    "boom.wav");
-            EntitySoundEffectsList["shoot"]   = Engine.GetResourceAsLocal(Resources.shoot,   "shoot.wav");
-            EntitySoundEffectsList["heal"]    = Engine.GetResourceAsLocal(Resources.heal,    "heal.wav");
-            EntitySoundEffectsList["oof"]     = Engine.GetResourceAsLocal(Resources.oof,     "oof.wav");
-            EntitySoundEffectsList["upgrade"] = Engine.GetResourceAsLocal(Resources.upgrade, "upgrade.wav");
         }
 
+        /// <summary>
+        /// Process creation of entities - Modify game values accordingly
+        /// </summary>
         public void ProcessEntityCreation()
         {
-            if (!GameEngine.IsRunning)
+            if (!_gameEngine.IsRunning)
                 return;
             if (SpawnBoss)
             {
@@ -68,40 +74,46 @@ namespace NuggetBlaster.GameCore
                     EntityDataList["boss"] = GetBossEntity();
                 SpawnBoss = false;
             }
-            if (EnemyCount < MaxEnemies)
+            if (_enemyCount < MaxEnemies && DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > _enemySpawnCooldownTimer)
             {
                 EnemyEntity enemy = GetRandomEnemyEntity();
                 AddEntity(enemy, "enemy-");
             }
-            if (GameEngine.Score > NextHeartSpawnPoints)
+            if (_gameEngine.Score > _nextHeartSpawnPoints)
             {
-                BuffEntity buff = new(GameArea, Random);
-                NextHeartSpawnPoints += HeartPointsSpawnInterval;
+                BuffHealEntity buff = new(_gameArea, _random);
+                _nextHeartSpawnPoints += _heartPointsSpawnInterval;
                 AddEntity(buff, "buff-");
             }
-            if (GameEngine.Score > NextPowerUpSpawnPoints)
+            if (_gameEngine.Score > _nextPowerUpSpawnPoints)
             {
-                BuffShootEntity buff = new(GameArea, Random);
-                NextPowerUpSpawnPoints += PowerUpSpawnInterval;
+                BuffShootEntity buff = new(_gameArea, _random);
+                _nextPowerUpSpawnPoints += _powerUpSpawnInterval;
                 AddEntity(buff, "buff-");
             }
         }
  
+        /// <summary>
+        /// Process entity movement (And interaction with GameArea bounderies)
+        /// </summary>
         public void ProcessEntityMovement()
         {
-            if (!GameEngine.IsRunning)
+            if (!_gameEngine.IsRunning)
                 return;
             foreach (string key in EntityDataList.Keys.ToArray())
             {
-                EntityDataList[key].CalculateMovement(GameEngine.TicksToProcess);
-                if (!Engine.RectangleOverlaps(EntityDataList[key].SpriteRectangle, GameArea))
+                EntityDataList[key].CalculateMovement(_gameEngine.TicksToProcess);
+                if (!Engine.RectangleOverlaps(EntityDataList[key].SpriteRectangle, _gameArea))
                     DeleteEntity(key);
             }
         }
 
+        /// <summary>
+        /// Process entity "shooting" (creation of new projectile entities)
+        /// </summary>
         public void ProcessProjectileCreation()
         {
-            if (!GameEngine.IsRunning)
+            if (!_gameEngine.IsRunning)
                 return;
             bool playShoot = false;
             string[] entityKeys = EntityDataList.Keys.ToArray();
@@ -114,26 +126,31 @@ namespace NuggetBlaster.GameCore
                     AddEntity(entity, "proj-");
             }
             if (playShoot)
-                Engine.PlaySoundAsync(EntitySoundEffectsList["shoot"]);
+                Engine.PlaySoundAsync(_entitySoundEffectsList["shoot"]);
         }
 
-        public void ProcessEntityCollissions()
+        /// <summary>
+        /// Process contact between varying entity types (Damage, Buffs, etc.)
+        /// </summary>
+        public void ProcessEntityCollisions()
         {
-            if (!GameEngine.IsRunning)
+            if (!_gameEngine.IsRunning)
                 return;
-            int enemyCountStart = EnemyCount;
+            int enemyCountStart = _enemyCount;
             int playerHPStart   = GetPlayerHP();
             string[] entityKeys = EntityDataList.Keys.ToArray();
             foreach (string targetKey in entityKeys)
             {
-                if (!EntityDataList.ContainsKey(targetKey) || EntityDataList[targetKey].GetType() == typeof(ProjectileEntity))
+                if (!EntityDataList.ContainsKey(targetKey))
                     continue;
                 foreach (string comparisonKey in entityKeys)
                 {
                     if (comparisonKey == targetKey || !EntityDataList.ContainsKey(comparisonKey) || !EntityDataList.ContainsKey(targetKey))
                         continue;
+                    // Check if compared entities' sprite rectangles overlap 
                     if (Engine.RectangleOverlaps(EntityDataList[targetKey].SpriteRectangle, EntityDataList[comparisonKey].SpriteRectangle))
                     {
+                        // If compared entities are not same team, process damage
                         if (EntityDataList[comparisonKey].Team != EntityDataList[targetKey].Team)
                         {
                             EntityDataList[targetKey].TakeDamage(EntityDataList[comparisonKey]);
@@ -143,13 +160,14 @@ namespace NuggetBlaster.GameCore
                                 DeleteEntity(targetKey, true);
                             if (EntityDataList[comparisonKey].HitPoints < 1)
                                 DeleteEntity(comparisonKey, true);
-                        } else if (EntityDataList[targetKey].GetType() == typeof(PlayerEntity) && (EntityDataList[comparisonKey].GetType().IsSubclassOf(typeof(BuffEntity)) || EntityDataList[comparisonKey].GetType() == typeof(BuffEntity)))
+                        // Check if player interacts with a buff entity (Heal, Upgrade, etc.)
+                        } else if (EntityDataList[targetKey].GetType() == typeof(PlayerEntity) && EntityDataList[comparisonKey].GetType().IsSubclassOf(typeof(BuffEntity)))
                         {
                             EntityDataList[targetKey] = (EntityDataList[comparisonKey] as BuffEntity).AddBuff(EntityDataList[targetKey] as PlayerEntity);
-                            if (EntityDataList[comparisonKey].GetType() == typeof(BuffEntity))
-                                Engine.PlaySoundAsync(EntitySoundEffectsList["heal"]);
+                            if (EntityDataList[comparisonKey].GetType() == typeof(BuffHealEntity))
+                                Engine.PlaySoundAsync(_entitySoundEffectsList["heal"]);
                             if (EntityDataList[comparisonKey].GetType() == typeof(BuffShootEntity))
-                                Engine.PlaySoundAsync(EntitySoundEffectsList["upgrade"]);
+                                Engine.PlaySoundAsync(_entitySoundEffectsList["upgrade"]);
 
                             DeleteEntity(comparisonKey, true);
                         }
@@ -157,51 +175,63 @@ namespace NuggetBlaster.GameCore
                 }
             }
             if (GetPlayerHP() < playerHPStart)
-                Engine.PlaySoundAsync(EntitySoundEffectsList["oof"]);
-            else if (EnemyCount < enemyCountStart)
-                Engine.PlaySoundAsync(EntitySoundEffectsList["boom"]);
+                Engine.PlaySoundAsync(_entitySoundEffectsList["oof"]);
+            else if (_enemyCount < enemyCountStart)
+                Engine.PlaySoundAsync(_entitySoundEffectsList["boom"]);
         }
 
+        /// <summary>
+        /// Remove all existing entities - Modify game values accordingly
+        /// </summary>
         public void ClearEntities()
         {
             foreach (KeyValuePair<string, Entity> entity in EntityDataList)
                 DeleteEntity(entity.Key);
 
             EntityDataList.Clear();
-            EnemyCount     = 0;
-            EntityIterator = 0;
+            _enemyCount     = 0;
+            _entityIterator = 0;
         }
 
-        public void AddEntity(Entity Data, string prefix = "")
+        /// <summary>
+        /// Handle adding new entity - Modify game values accordingly
+        /// </summary>
+        private void AddEntity(Entity Data, string prefix = "")
         {
-            if (Data.GetType() != typeof(EnemyEntity) || DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > EnemySpawnCooldownTimer)
+            if (Data.GetType() != typeof(EnemyEntity) || DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() > _enemySpawnCooldownTimer)
             {
-                EntityDataList[prefix + EntityIterator.ToString()] = Data;
-                EntityIterator++;
+                EntityDataList[prefix + _entityIterator.ToString()] = Data;
+                _entityIterator++;
                 if (Data.GetType() == typeof(EnemyEntity))
                 {
-                    EnemyCount++;
-                    EnemySpawnCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + EnemySpawnCooldownMS;
+                    _enemyCount++;
+                    _enemySpawnCooldownTimer = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + _enemySpawnCooldownMS;
                 }
             }
         }
  
-        public void DeleteEntity(string id, bool addPoints = false)
+        /// <summary>
+        /// Handle deletion of entities - Modify game values accordingly
+        /// </summary>
+        private void DeleteEntity(string id, bool addPoints = false)
         {
             if (!EntityDataList.ContainsKey(id))
                 return;
             if (EntityDataList[id].GetType() == typeof(PlayerEntity))
-                GameEngine.IsRunning = false;
+                _gameEngine.IsRunning = false;
             if (EntityDataList[id].GetType() == typeof(EnemyEntity))
-                EnemyCount--;
+                _enemyCount--;
             if (addPoints)
-                GameEngine.Score += EntityDataList[id].PointsOnKill;
+                _gameEngine.Score += EntityDataList[id].PointsOnKill;
             EntityDataList.Remove(id);
         }
 
-        public EnemyEntity GetRandomEnemyEntity()
+        /// <summary>
+        /// Return (weighted) random enemy entity
+        /// </summary>
+        private EnemyEntity GetRandomEnemyEntity()
         {
-            int enemySeed = Random.Next(0, 100);
+            int enemySeed = _random.Next(0, 100);
             if (enemySeed > 80)
                 return GetStageThreeEnemyEntity();
             else if (enemySeed > 40)
@@ -210,60 +240,75 @@ namespace NuggetBlaster.GameCore
                 return GetStageOneEnemyEntity();
         }
 
-        public Rectangle GetEnemyEntityRectangle()
+        /// <summary>
+        /// Return default enemy location and dimensions for standard enemies
+        /// </summary>
+        private Rectangle GetEnemyEntityRectangle()
         {
-            int x = GameArea.Width;
-            int y = Random.Next(10, GameArea.Height - (int)(GameArea.Width * 0.1));
-            int w = (int)(GameArea.Width * 0.1);
-            int h = (int)(GameArea.Width * 0.1);
+            int x = _gameArea.Width;
+            int y = _random.Next(10, _gameArea.Height - (int)(_gameArea.Width * 0.1));
+            int w = (int)(_gameArea.Width * 0.1);
+            int h = (int)(_gameArea.Width * 0.1);
             return new Rectangle(x, y, w, h);
         }
 
-        public EnemyEntity GetStageOneEnemyEntity()
+        /// <summary>
+        /// Simple left moving enemy - Does not shoot
+        /// </summary>
+        private EnemyEntity GetStageOneEnemyEntity()
         {
-            EnemyEntity entity = new(GameArea, GetEnemyEntityRectangle(), Resources.pickle);
-            entity.BaseSpeed   = Random.Next(400, 600)/1000.0;
+            EnemyEntity entity = new(_gameArea, GetEnemyEntityRectangle(), Resources.pickle);
+            entity.BaseSpeed   = _random.Next(400, 600)/1000.0;
             entity.SpeedMulti  = EnemySpeedMulti;
             entity.HitPoints   = 1;
             return entity;
         }
 
-        public EnemyEntity GetStageTwoEnemyEntity()
+        /// <summary>
+        /// Same as Stage 1 except also shoots
+        /// </summary>
+        private EnemyEntity GetStageTwoEnemyEntity()
         {
-            if (GameEngine.GameStage < 2)
+            if (_gameEngine.GameStage < 2)
                 return GetRandomEnemyEntity();
-            EnemyEntity entity  = new(GameArea, GetEnemyEntityRectangle(), Resources.coolPickle);
+            EnemyEntity entity  = new(_gameArea, GetEnemyEntityRectangle(), Resources.coolPickle);
             entity.CanShoot     = true;
-            entity.BaseSpeed    = Random.Next(200, 400) / 1000.0;
+            entity.BaseSpeed    = _random.Next(200, 400) / 1000.0;
             entity.SpeedMulti   = EnemySpeedMulti;
             entity.HitPoints    = 2;
             entity.PointsOnKill = 300;
             return entity;
         }
 
-        public EnemyEntity GetStageThreeEnemyEntity()
+        /// <summary>
+        /// Same as Stage 2 except also moves diagonally up and down across screen
+        /// </summary>
+        private EnemyEntity GetStageThreeEnemyEntity()
         {
-            if (GameEngine.GameStage < 3)
+            if (_gameEngine.GameStage < 3)
                 return GetRandomEnemyEntity();
-            EnemyEntity entity  = new(GameArea, GetEnemyEntityRectangle(), Resources.coolestPickle);
+            EnemyEntity entity  = new(_gameArea, GetEnemyEntityRectangle(), Resources.coolestPickle);
             entity.CanShoot     = true;
-            entity.BaseSpeed    = Random.Next(200, 300) / 1000.0;
+            entity.BaseSpeed    = _random.Next(200, 300) / 1000.0;
             entity.SpeedMulti   = EnemySpeedMulti;
             entity.HitPoints    = 3;
             entity.PointsOnKill = 600;
-            entity.MoveUp       = Random.Next(0, 1) == 1;
+            entity.MoveUp       = _random.Next(0, 1) == 1;
             entity.MoveDown     = ! entity.MoveUp;
             return entity;
         }
 
-        public BossEntity GetBossEntity()
+        /// <summary>
+        /// Moves diagonally across screen bouncing on edges - Shoots in modified pattern
+        /// </summary>
+        private BossEntity GetBossEntity()
         {
-            int x = (int)(GameArea.Width - GameArea.Width * 0.2);
-            int y = (int)(GameArea.Height / 2 - GameArea.Width * 0.1);
-            int w = (int)(GameArea.Width * 0.2);
-            int h = (int)(GameArea.Width * 0.1);
-            BossEntity entity = new(GameArea, new Rectangle(x, y, w, h));
-            entity.MoveUp     = Random.Next(0, 1) == 1;
+            int x = (int)(_gameArea.Width - _gameArea.Width * 0.2);
+            int y = (int)(_gameArea.Height / 2 - _gameArea.Width * 0.1);
+            int w = (int)(_gameArea.Width * 0.2);
+            int h = (int)(_gameArea.Width * 0.1);
+            BossEntity entity = new(_gameArea, new Rectangle(x, y, w, h));
+            entity.MoveUp     = _random.Next(0, 1) == 1;
             entity.MoveDown   = !entity.MoveUp;
             return entity;
         }

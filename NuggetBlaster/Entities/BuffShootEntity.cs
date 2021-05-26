@@ -1,5 +1,4 @@
-﻿using NuggetBlaster.GameCore;
-using NuggetBlaster.Properties;
+﻿using NuggetBlaster.Properties;
 using System;
 using System.Drawing;
 

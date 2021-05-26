@@ -5,7 +5,8 @@ namespace NuggetBlaster.Entities
 {
     class BossEntity : EnemyEntity
     {
-        public const int MaxHP = 50;
+        public static int MaxHP = 50;
+
         public BossEntity(Rectangle gameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(gameCanvas, spriteRectangle, sprite ?? Resources.bossPickle)
         {
             PointsOnKill        = 50000;
