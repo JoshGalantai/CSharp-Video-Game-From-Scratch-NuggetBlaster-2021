@@ -1,18 +1,23 @@
-﻿using NuggetBlaster.Properties;
-using System;
-using System.Drawing;
-
-namespace NuggetBlaster.Entities
+﻿namespace NuggetBlaster.Entities
 {
-    class BuffShootEntity : BuffEntity
+  using System;
+  using System.Drawing;
+  using Properties;
+  
+  public class BuffShootEntity : BuffEntity
+  {
+    public BuffShootEntity(Random random, Image sprite = null) : base(random, sprite ?? Resources.buffShoot)
     {
-        public BuffShootEntity(Rectangle gameCanvas, Random random, Image sprite = null) : base(gameCanvas, random, sprite ?? Resources.buffShoot){}
-
-        public override PlayerEntity AddBuff(PlayerEntity entity)
-        {
-            if (entity.ShootBuffLevel < PlayerEntity.MaxShootBuffLevel)
-                entity.ShootBuffLevel++;
-            return entity;
-        }
     }
+
+    public override PlayerEntity AddBuff(PlayerEntity entity)
+    {
+      if (entity.ShootBuffLevel < PlayerEntity.MaxShootBuffLevel)
+      {
+        entity.ShootBuffLevel++;
+      }
+
+      return entity;
+    }
+  }
 }

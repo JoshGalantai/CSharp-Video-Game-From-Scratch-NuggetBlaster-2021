@@ -1,22 +1,22 @@
-﻿using NuggetBlaster.Properties;
-using System.Drawing;
-
-namespace NuggetBlaster.Entities
+﻿namespace NuggetBlaster.Entities
 {
-    class BossEntity : EnemyEntity
-    {
-        public static int MaxHP = 50;
+  using System.Drawing;
+  using Properties;
 
-        public BossEntity(Rectangle gameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(gameCanvas, spriteRectangle, sprite ?? Resources.bossPickle)
-        {
-            PointsOnKill        = 50000;
-            ShootCooldownMS     = 2500;
-            HitPoints           = MaxHP;
-            BaseSpeed           = 0.250;
-            IsDamagedOnTouch    = false;
-            AllowHorizontalExit = false;
-            TripleShot          = true;
-            CanShoot            = true;
-        }
+  public class BossEntity : EnemyEntity
+  {
+    public const int MaxHP = 50;
+
+    public BossEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite ?? Resources.bossPickle)
+    {
+      this.PointsOnKill = 50000;
+      this.ShootCooldownMS = 2500;
+      this.HitPoints = MaxHP;
+      this.BaseSpeed = 0.250;
+      this.IsDamagedOnTouch = false;
+      this.AllowHorizontalExit = false;
+      this.TripleShot = true;
+      this.CanShoot = true;
     }
+  }
 }

@@ -1,15 +1,17 @@
-﻿using System;
-using System.Drawing;
-
-namespace NuggetBlaster.Entities
+﻿namespace NuggetBlaster.Entities
 {
-    public class ProjectileEntity : Entity, ICloneable
-    {
-        public ProjectileEntity(Rectangle GameCanvas, Rectangle spriteRectangle, Image sprite = null) : base(GameCanvas, spriteRectangle, sprite) { }
+  using System;
+  using System.Drawing;
 
-        public object Clone()
-        {
-            return (ProjectileEntity)MemberwiseClone();
-        }
+  public class ProjectileEntity : Entity, ICloneable
+  {
+    public ProjectileEntity(Rectangle spriteRectangle, Image sprite = null) : base(spriteRectangle, sprite)
+    {
     }
+
+    public object Clone()
+    {
+      return (ProjectileEntity)MemberwiseClone();
+    }
+  }
 }

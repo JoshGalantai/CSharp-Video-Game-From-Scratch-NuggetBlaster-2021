@@ -9,6 +9,8 @@
 //------------------------------------------------------------------------------
 
 namespace NuggetBlaster.Properties {
+    using System;
+    
     
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
@@ -84,6 +86,36 @@ namespace NuggetBlaster.Properties {
         internal static System.Drawing.Bitmap background {
             get {
                 object obj = ResourceManager.GetObject("background", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap bgLayerBot {
+            get {
+                object obj = ResourceManager.GetObject("bgLayerBot", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap bgLayerMid {
+            get {
+                object obj = ResourceManager.GetObject("bgLayerMid", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap bgLayerTop {
+            get {
+                object obj = ResourceManager.GetObject("bgLayerTop", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
